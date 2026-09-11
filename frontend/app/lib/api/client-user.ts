@@ -25,6 +25,7 @@ import { GroupEventNotifierApi } from "./user/group-event-notifier";
 import { MealPlanRulesApi } from "./user/group-mealplan-rules";
 import { GroupDataSeederApi } from "./user/group-seeder";
 import { AIProvidersAPI } from "./user/group-ai-providers";
+import { HouseholdDinerAPI, MealPreparationAPI } from "./user/household-meal-intent";
 import type { ApiRequestInstance } from "~/lib/api/types/non-generated";
 
 export class UserApiClient {
@@ -55,6 +56,8 @@ export class UserApiClient {
   public upload: UploadFile;
   public seeders: GroupDataSeederApi;
   public aiProviders: AIProvidersAPI;
+  public householdDiners: HouseholdDinerAPI;
+  public mealPreparations: MealPreparationAPI;
 
   constructor(requests: ApiRequestInstance) {
     // Recipes
@@ -75,6 +78,8 @@ export class UserApiClient {
     this.register = new RegisterAPI(requests);
     this.mealplans = new MealPlanAPI(requests);
     this.mealplanRules = new MealPlanRulesApi(requests);
+    this.householdDiners = new HouseholdDinerAPI(requests);
+    this.mealPreparations = new MealPreparationAPI(requests);
 
     // Group
     this.groupMigration = new GroupMigrationApi(requests);

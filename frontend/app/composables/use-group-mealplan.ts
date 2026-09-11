@@ -45,6 +45,28 @@ export type MealsByDate = {
   meals: ReadPlanEntry[];
 };
 
+function normalizeMealPlanUpdate(data: UpdatePlanEntry | ReadPlanEntry): UpdatePlanEntry {
+  const selection = data.dinerSelection;
+  const dinerIds = selection && "diners" in selection
+    ? selection.diners.map(diner => diner.id)
+    : selection?.dinerIds ?? [];
+
+  return {
+    id: data.id,
+    groupId: data.groupId,
+    userId: data.userId,
+    date: data.date,
+    entryType: data.entryType,
+    title: data.title,
+    text: data.text,
+    recipeId: data.recipeId,
+    dinerSelection: selection
+      ? { mode: selection.mode, dinerIds: selection.mode === "selected" ? dinerIds : [] }
+      : undefined,
+    preparationIntent: "preparationIntent" in data ? data.preparationIntent : undefined,
+  };
+}
+
 export interface Meal {
   date: Date;
   title: string;
@@ -108,13 +130,14 @@ export const useMealplans = function (range: Ref<DateRange>) {
 
       loading.value = false;
     },
-    async updateOne(updateData: UpdatePlanEntry) {
+    async updateOne(updateData: UpdatePlanEntry | ReadPlanEntry) {
       if (!updateData.id) {
         return;
       }
 
       loading.value = true;
-      const { data } = await api.mealplans.updateOne(updateData.id, updateData);
+      const normalized = normalizeMealPlanUpdate(updateData);
+      const { data } = await api.mealplans.updateOne(normalized.id, normalized);
       if (data) {
         this.refreshAll();
       }
@@ -130,7 +153,7 @@ export const useMealplans = function (range: Ref<DateRange>) {
       loading.value = false;
     },
 
-    async setType(payload: UpdatePlanEntry, type: PlanEntryType) {
+    async setType(payload: UpdatePlanEntry | ReadPlanEntry, type: PlanEntryType) {
       payload.entryType = type;
       await this.updateOne(payload);
     },

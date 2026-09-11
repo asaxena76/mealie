@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         GroupInviteToken,
         GroupRecipeAction,
         GroupWebhooksModel,
+        HouseholdDiner,
         HouseholdPreferencesModel,
     )
 
@@ -51,6 +52,9 @@ class Household(SqlAlchemyBase, BaseMixins):
     group_id: FilterableColumn[GUID] = mapped_column(GUID, sa.ForeignKey("groups.id"), nullable=False, index=True)
     group: Mapped["Group"] = orm.relationship("Group", back_populates="households")
     users: Mapped[list["User"]] = orm.relationship("User", back_populates="household")
+    diners: Mapped[list["HouseholdDiner"]] = orm.relationship(
+        "HouseholdDiner", back_populates="household", cascade="all, delete-orphan"
+    )
 
     COMMON_ARGS = {
         "back_populates": "household",
@@ -89,6 +93,7 @@ class Household(SqlAlchemyBase, BaseMixins):
             "group_event_notifiers",
             "group",
             "made_recipes",
+            "diners",
         }
     )
 

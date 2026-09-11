@@ -10,8 +10,7 @@ from mealie.repos.repository_meals import RepositoryMeals
 from mealie.routes._base import controller
 from mealie.routes._base.base_controllers import BaseCrudController
 from mealie.routes._base.mixins import HttpRepo
-from mealie.schema import mapper
-from mealie.schema.meal_plan import CreatePlanEntry, ReadPlanEntry, SavePlanEntry, UpdatePlanEntry
+from mealie.schema.meal_plan import CreatePlanEntry, ReadPlanEntry, UpdatePlanEntry
 from mealie.schema.meal_plan.new_meal import CreateRandomEntry, PlanEntryPagination, PlanEntryType
 from mealie.schema.meal_plan.plan_rules import PlanRulesDay
 from mealie.schema.recipe.recipe import Recipe
@@ -22,6 +21,7 @@ from mealie.services.event_bus_service.event_types import (
     EventOperation,
     EventTypes,
 )
+from mealie.services.household_services.meal_plan_service import MealPlanService
 from mealie.services.query_filter.builder import QueryFilterBuilder
 
 router = APIRouter(prefix="/households/mealplans", tags=["Households: Mealplans"])
@@ -46,6 +46,10 @@ class GroupMealplanController(BaseCrudController):
             self.logger,
             self.registered_exceptions,
         )
+
+    @cached_property
+    def service(self) -> MealPlanService:
+        return MealPlanService(self.group_id, self.household_id, self.user.id, self.repos)
 
     def _get_random_recipes_from_mealplan(
         self, plan_date: date, entry_type: PlanEntryType, limit: int = 1
@@ -98,22 +102,24 @@ class GroupMealplanController(BaseCrudController):
 
     @router.post("", response_model=ReadPlanEntry, status_code=201)
     def create_one(self, data: CreatePlanEntry):
-        data = mapper.cast(data, SavePlanEntry, group_id=self.group_id, user_id=self.user.id)
-        result = self.mixins.create_one(data)
+        try:
+            result = self.service.create_meal(data)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
         self.publish_event(
             event_type=EventTypes.mealplan_entry_created,
             document_data=EventMealplanData(
                 operation=EventOperation.create,
                 mealplan_id=result.id,
-                recipe_id=data.recipe_id,
+                recipe_id=result.recipe_id,
                 recipe_name=result.recipe.name if result.recipe else None,
                 recipe_slug=result.recipe.slug if result.recipe else None,
-                date=data.date,
+                date=result.date,
             ),
             group_id=result.group_id,
             household_id=result.household_id,
-            message=f"Mealplan entry created for {data.date} for {data.entry_type}",
+            message=f"Mealplan entry created for {result.date} for {result.entry_type}",
         )
 
         return result
@@ -140,13 +146,11 @@ class GroupMealplanController(BaseCrudController):
             )
 
         recipe = random_recipes[0]
-        result = self.mixins.create_one(
-            SavePlanEntry(
+        result = self.service.create_meal(
+            CreatePlanEntry(
                 date=data.date,
                 entry_type=data.entry_type,
                 recipe_id=recipe.id,
-                group_id=self.group_id,
-                user_id=self.user.id,
             )
         )
 
@@ -173,7 +177,10 @@ class GroupMealplanController(BaseCrudController):
 
     @router.put("/{item_id}", response_model=ReadPlanEntry)
     def update_one(self, item_id: int, data: UpdatePlanEntry):
-        result = self.mixins.update_one(data, item_id)
+        try:
+            result = self.service.update_meal(item_id, data)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
         self.publish_event(
             event_type=EventTypes.mealplan_entry_updated,
@@ -194,7 +201,10 @@ class GroupMealplanController(BaseCrudController):
 
     @router.delete("/{item_id}", response_model=ReadPlanEntry)
     def delete_one(self, item_id: int):
-        result = self.mixins.delete_one(item_id)
+        try:
+            result = self.service.delete_meal(item_id)
+        except ValueError as error:
+            raise HTTPException(status_code=404, detail=str(error)) from error
 
         self.publish_event(
             event_type=EventTypes.mealplan_entry_deleted,

@@ -86,6 +86,16 @@ Mealie uses a calendar like view to help you plan your meals. It shows you the p
 
 [Mealplanner Demo](https://demo.mealie.io/household/mealplan/planner/view){ .md-button .md-button--primary }
 
+### Diners and Cooking Intent
+
+Households can define lightweight diner profiles without creating additional login accounts. Meal-plan entries default to
+everyone, or can be annotated with a selected set of diners. Recipe-backed entries can also record a cooking date and
+primary cook. When one cooked batch is eaten on multiple days, link the later eating entries to the original preparation;
+the eating planner will show which day the batch was cooked while keeping each day's diners explicit.
+
+These fields are available through the household diner, meal preparation, and meal-plan APIs. A selected diner represents
+one derived portion for that eating entry; Mealie does not store a separate editable portion count for this workflow.
+
 ### Planner Rules
 
 The meal planner has the concept of plan rules. These offer a flexible way to use your organizers to customize how a random recipe is inserted into your meal plan. You can set rules to restrict the pool of recipes based on the Tags and/or Categories of a recipe. Additionally, since meal plans have a Breakfast, Lunch, Dinner, and Snack labels, you can specifically set a rule to be active for a **specific meal type** or even a **specific day of the week.**

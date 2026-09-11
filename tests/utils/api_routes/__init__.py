@@ -87,12 +87,16 @@ groups_storage = "/api/groups/storage"
 """`/api/groups/storage`"""
 households_cookbooks = "/api/households/cookbooks"
 """`/api/households/cookbooks`"""
+households_diners = "/api/households/diners"
+"""`/api/households/diners`"""
 households_events_notifications = "/api/households/events/notifications"
 """`/api/households/events/notifications`"""
 households_invitations = "/api/households/invitations"
 """`/api/households/invitations`"""
 households_invitations_email = "/api/households/invitations/email"
 """`/api/households/invitations/email`"""
+households_meal_preparations = "/api/households/meal-preparations"
+"""`/api/households/meal-preparations`"""
 households_mealplans = "/api/households/mealplans"
 """`/api/households/mealplans`"""
 households_mealplans_random = "/api/households/mealplans/random"
@@ -362,6 +366,11 @@ def households_cookbooks_item_id(item_id):
     return f"{prefix}/households/cookbooks/{item_id}"
 
 
+def households_diners_item_id(item_id):
+    """`/api/households/diners/{item_id}`"""
+    return f"{prefix}/households/diners/{item_id}"
+
+
 def households_events_notifications_item_id(item_id):
     """`/api/households/events/notifications/{item_id}`"""
     return f"{prefix}/households/events/notifications/{item_id}"
@@ -370,6 +379,11 @@ def households_events_notifications_item_id(item_id):
 def households_events_notifications_item_id_test(item_id):
     """`/api/households/events/notifications/{item_id}/test`"""
     return f"{prefix}/households/events/notifications/{item_id}/test"
+
+
+def households_meal_preparations_item_id(item_id):
+    """`/api/households/meal-preparations/{item_id}`"""
+    return f"{prefix}/households/meal-preparations/{item_id}"
 
 
 def households_mealplans_item_id(item_id):

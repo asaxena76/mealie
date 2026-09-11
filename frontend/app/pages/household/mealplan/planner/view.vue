@@ -20,43 +20,47 @@
                     </p>
                   </div>
                   <SpinTransition>
-                    <RecipeCardMobile
+                    <div
                       v-for="mealplan in section.meals"
                       :key="mealplan.id"
-                      :recipe-id="mealplan.recipe ? mealplan.recipe.id! : ''"
                       class="mb-2"
-                      :rating="mealplan.recipe ? mealplan.recipe.rating! : 0"
-                      :slug="mealplan.recipe ? mealplan.recipe.slug! : mealplan.title!"
-                      :description="mealplan.recipe ? mealplan.recipe.description! : mealplan.text!"
-                      :name="mealplan.recipe ? mealplan.recipe.name! : mealplan.title!"
-                      :image="mealplan.recipe ? mealplan.recipe.image! : undefined"
-                      :tags="mealplan.recipe ? mealplan.recipe.tags! : []"
-                      :context-menu-leading-items="[
-                        {
-                          title: $t('meal-plan.remove-from-plan'),
-                          icon: $globals.icons.calendarRemove,
-                          color: undefined,
-                          event: 'mealplanRemove',
-                          isPublic: false,
-                        },
-                        {
-                          title: $t('meal-plan.edit-meal-plan'),
-                          icon: $globals.icons.calendarEdit,
-                          color: undefined,
-                          event: 'mealplanEdit',
-                          isPublic: false,
-                        },
-                      ]"
-                      @mealplan-remove="actions.deleteOne(mealplan.id)"
-                      @mealplan-edit="editMeal(mealplan)"
                     >
-                      <template v-if="!mealplan.recipe" #context-menu>
-                        <MealPlanNoteMenu
-                          @mealplan-remove="actions.deleteOne(mealplan.id)"
-                          @mealplan-edit="editMeal(mealplan)"
-                        />
-                      </template>
-                    </RecipeCardMobile>
+                      <RecipeCardMobile
+                        :recipe-id="mealplan.recipe ? mealplan.recipe.id! : ''"
+                        :rating="mealplan.recipe ? mealplan.recipe.rating! : 0"
+                        :slug="mealplan.recipe ? mealplan.recipe.slug! : mealplan.title!"
+                        :description="mealplan.recipe ? mealplan.recipe.description! : mealplan.text!"
+                        :name="mealplan.recipe ? mealplan.recipe.name! : mealplan.title!"
+                        :image="mealplan.recipe ? mealplan.recipe.image! : undefined"
+                        :tags="mealplan.recipe ? mealplan.recipe.tags! : []"
+                        :context-menu-leading-items="[
+                          {
+                            title: $t('meal-plan.remove-from-plan'),
+                            icon: $globals.icons.calendarRemove,
+                            color: undefined,
+                            event: 'mealplanRemove',
+                            isPublic: false,
+                          },
+                          {
+                            title: $t('meal-plan.edit-meal-plan'),
+                            icon: $globals.icons.calendarEdit,
+                            color: undefined,
+                            event: 'mealplanEdit',
+                            isPublic: false,
+                          },
+                        ]"
+                        @mealplan-remove="actions.deleteOne(mealplan.id)"
+                        @mealplan-edit="editMeal(mealplan)"
+                      >
+                        <template v-if="!mealplan.recipe" #context-menu>
+                          <MealPlanNoteMenu
+                            @mealplan-remove="actions.deleteOne(mealplan.id)"
+                            @mealplan-edit="editMeal(mealplan)"
+                          />
+                        </template>
+                      </RecipeCardMobile>
+                      <MealPlanIntentSummary :mealplan="mealplan" />
+                    </div>
                   </SpinTransition>
                 </div>
               </SpinTransition>
@@ -70,6 +74,7 @@
 
 <script setup lang="ts">
 import MealPlanNoteMenu from "~/components/Domain/Mealplan/MealPlanNoteMenu.vue";
+import MealPlanIntentSummary from "~/components/Domain/Mealplan/MealPlanIntentSummary.vue";
 import RecipeCardMobile from "~/components/Domain/Recipe/RecipeCardMobile.vue";
 import type { MealsByDate } from "~/composables/use-group-mealplan";
 import type { ReadPlanEntry } from "~/lib/api/types/meal-plan";

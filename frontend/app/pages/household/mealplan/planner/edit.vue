@@ -55,6 +55,7 @@
                     {{ mealplan.text }}
                   </v-list-item-subtitle>
                 </v-list-item>
+                <MealPlanIntentSummary :mealplan="mealplan" />
                 <v-divider class="mx-2" />
                 <div class="py-2 px-2 d-flex" style="align-items: center">
                   <v-btn size="small" icon variant="text" :class="{ handle: !$vuetify.display.smAndUp }">
@@ -117,6 +118,7 @@ import { format } from "date-fns";
 import type { SortableEvent } from "sortablejs";
 import { VueDraggable } from "vue-draggable-plus";
 import GroupMealPlanEntryDialog from "~/components/Domain/Household/GroupMealPlanEntryDialog.vue";
+import MealPlanIntentSummary from "~/components/Domain/Mealplan/MealPlanIntentSummary.vue";
 import RecipeCardLineItem from "~/components/Domain/Recipe/RecipeCardLineItem.vue";
 import { useUserApi } from "~/composables/api";
 import type { MealsByDate, useMealplans } from "~/composables/use-group-mealplan";

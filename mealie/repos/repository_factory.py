@@ -15,7 +15,7 @@ from mealie.db.models.household.events import GroupEventNotifierModel
 from mealie.db.models.household.household import Household
 from mealie.db.models.household.household_to_recipe import HouseholdToRecipe
 from mealie.db.models.household.invite_tokens import GroupInviteToken
-from mealie.db.models.household.mealplan import GroupMealPlan, GroupMealPlanRules
+from mealie.db.models.household.mealplan import GroupMealPlan, GroupMealPlanRules, HouseholdDiner, MealPlanPreparation
 from mealie.db.models.household.preferences import HouseholdPreferencesModel
 from mealie.db.models.household.recipe_action import GroupRecipeAction
 from mealie.db.models.household.shopping_list import (
@@ -62,6 +62,7 @@ from mealie.schema.household.household_preferences import ReadHouseholdPreferenc
 from mealie.schema.household.invite_token import ReadInviteToken
 from mealie.schema.household.webhook import ReadWebhook
 from mealie.schema.labels import MultiPurposeLabelOut
+from mealie.schema.meal_plan.meal_intent import ReadDiner, ReadMealPreparation
 from mealie.schema.meal_plan.new_meal import ReadPlanEntry
 from mealie.schema.meal_plan.plan_rules import PlanRulesOut
 from mealie.schema.recipe import Recipe, RecipeCommentOut, RecipeToolOut
@@ -364,6 +365,28 @@ class AllRepositories:
     def meals(self) -> RepositoryMeals:
         return RepositoryMeals(
             self.session, PK_ID, GroupMealPlan, ReadPlanEntry, group_id=self.group_id, household_id=self.household_id
+        )
+
+    @cached_property
+    def household_diners(self) -> HouseholdRepositoryGeneric[ReadDiner, HouseholdDiner]:
+        return HouseholdRepositoryGeneric(
+            self.session,
+            PK_ID,
+            HouseholdDiner,
+            ReadDiner,
+            group_id=self.group_id,
+            household_id=self.household_id,
+        )
+
+    @cached_property
+    def meal_preparations(self) -> HouseholdRepositoryGeneric[ReadMealPreparation, MealPlanPreparation]:
+        return HouseholdRepositoryGeneric(
+            self.session,
+            PK_ID,
+            MealPlanPreparation,
+            ReadMealPreparation,
+            group_id=self.group_id,
+            household_id=self.household_id,
         )
 
     @cached_property

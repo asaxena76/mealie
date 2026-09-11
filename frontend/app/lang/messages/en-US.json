@@ -270,7 +270,16 @@
     "lock-recipe-edits-from-other-households-description": "When enabled only users in your household can edit recipes created by your household",
     "household-recipe-preferences": "Household Recipe Preferences",
     "default-recipe-preferences-description": "These are the default settings when a new recipe is created in your household. These can be changed for individual recipes in the recipe settings menu.",
-    "household-preferences": "Household Preferences"
+    "household-preferences": "Household Preferences",
+    "diners": "Diners",
+    "diners-description": "Lightweight household profiles used to show who is eating and who is cooking. These are not login accounts.",
+    "add-diner": "Add Diner",
+    "edit-diner": "Edit Diner",
+    "no-diners": "Add your household diners to annotate meals. Until then, Everyone remains the default.",
+    "abbreviation": "Abbreviation",
+    "emoji": "Emoji",
+    "color": "Color",
+    "active-diner": "Available for meal planning"
   },
   "meal-plan": {
     "create-a-new-meal-plan": "Create a New Meal Plan",
@@ -320,7 +329,20 @@
     "meal-plan-settings": "Meal Plan Settings",
     "add-all-to-list": "Add All to List",
     "add-day-to-list": "Add Day to List",
-    "randomize-recipe": "Randomize Recipe"
+    "randomize-recipe": "Randomize Recipe",
+    "who-is-eating": "Who is eating?",
+    "everyone": "Everyone",
+    "cooking-intention": "Cooking intention",
+    "cook-for-this-meal": "Cook for this meal",
+    "from-existing-batch": "Use an existing batch",
+    "no-existing-batches": "No earlier batch is available for this recipe",
+    "no-cooking-intention": "No cooking intention",
+    "who-is-cooking": "Who is cooking?",
+    "unassigned": "Unassigned",
+    "cook-on": "Cook on",
+    "cook-today": "Cook today",
+    "also-eaten": "Also eaten {days}",
+    "from-batch": "From {day}'s batch"
   },
   "migration": {
     "new-migration": "New Migration",
@@ -1142,6 +1164,8 @@
     "cookbooks-description": "Manage a collection of recipe categories and generate pages for them.",
     "members": "Members",
     "members-description": "See who's in your household and manage their permissions.",
+    "manage-diners": "Manage Diners",
+    "diners-description": "Set up the lightweight profiles used for eating and cooking annotations.",
     "webhooks-description": "Set up webhooks that trigger on days that you have mealplans scheduled.",
     "notifiers": "Notifiers",
     "notifiers-description": "Set up email and push notifications that trigger on specific events.",

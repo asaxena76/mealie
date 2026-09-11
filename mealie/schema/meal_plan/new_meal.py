@@ -8,12 +8,14 @@ from pydantic_core.core_schema import ValidationInfo
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.interfaces import LoaderOption
 
-from mealie.db.models.household import GroupMealPlan
+from mealie.db.models.household import GroupMealPlan, Household, MealPlanPreparation
 from mealie.db.models.recipe import RecipeModel
 from mealie.db.models.users.users import User
 from mealie.schema._mealie import MealieModel
 from mealie.schema.recipe.recipe import RecipeSummary
 from mealie.schema.response.pagination import PaginationBase
+
+from .meal_intent import DinerSelectionIn, DinerSelectionOut, PreparationIntent, ReadMealPreparation
 
 
 class PlanEntryType(StrEnum):
@@ -31,7 +33,7 @@ class CreateRandomEntry(MealieModel):
     entry_type: PlanEntryType = PlanEntryType.dinner
 
 
-class CreatePlanEntry(MealieModel):
+class PlanEntryBase(MealieModel):
     date: date
     entry_type: PlanEntryType = PlanEntryType.breakfast
     title: str = ""
@@ -47,6 +49,11 @@ class CreatePlanEntry(MealieModel):
         return value
 
 
+class CreatePlanEntry(PlanEntryBase):
+    diner_selection: DinerSelectionIn | None = None
+    preparation_intent: PreparationIntent | None = None
+
+
 class UpdatePlanEntry(CreatePlanEntry):
     id: int
     group_id: UUID
@@ -59,9 +66,14 @@ class SavePlanEntry(CreatePlanEntry):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ReadPlanEntry(UpdatePlanEntry):
+class ReadPlanEntry(PlanEntryBase):
+    id: int
+    group_id: UUID
+    user_id: UUID
     household_id: UUID
     recipe: RecipeSummary | None = None
+    diner_selection: DinerSelectionOut
+    preparation: ReadMealPreparation | None = None
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
@@ -70,7 +82,10 @@ class ReadPlanEntry(UpdatePlanEntry):
             selectinload(GroupMealPlan.recipe).joinedload(RecipeModel.recipe_category),
             selectinload(GroupMealPlan.recipe).joinedload(RecipeModel.tags),
             selectinload(GroupMealPlan.recipe).joinedload(RecipeModel.tools),
-            selectinload(GroupMealPlan.user).load_only(User.household_id),
+            selectinload(GroupMealPlan.user).joinedload(User.household).selectinload(Household.diners),
+            selectinload(GroupMealPlan.diners),
+            selectinload(GroupMealPlan.preparation).joinedload(MealPlanPreparation.cook_diner),
+            selectinload(GroupMealPlan.preparation).selectinload(MealPlanPreparation.meal_entries),
         ]
 
 

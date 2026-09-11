@@ -144,6 +144,22 @@
           </UserProfileLinkCard>
         </v-col>
         <v-col
+          v-if="user.canManageHousehold"
+          cols="12"
+          sm="12"
+          md="6"
+        >
+          <UserProfileLinkCard
+            :link="{ text: $t('profile.manage-diners'), to: `/household/diners` }"
+            image="/svgs/manage-members.svg"
+          >
+            <template #title>
+              {{ $t('household.diners') }}
+            </template>
+            {{ $t('profile.diners-description') }}
+          </UserProfileLinkCard>
+        </v-col>
+        <v-col
           cols="12"
           sm="12"
           md="6"
