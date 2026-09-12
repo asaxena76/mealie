@@ -96,6 +96,10 @@ the eating planner will show which day the batch was cooked while keeping each d
 These fields are available through the household diner, meal preparation, and meal-plan APIs. A selected diner represents
 one derived portion for that eating entry; Mealie does not store a separate editable portion count for this workflow.
 
+The weekly planner can be filtered by one or more diners. A filtered view includes meals that a selected diner eats or
+cooks, while meals assigned to everyone always remain visible. This display filter does not change the complete recipe set
+used by full-week shopping-list actions.
+
 ### Planner Rules
 
 The meal planner has the concept of plan rules. These offer a flexible way to use your organizers to customize how a random recipe is inserted into your meal plan. You can set rules to restrict the pool of recipes based on the Tags and/or Categories of a recipe. Additionally, since meal plans have a Breakfast, Lunch, Dinner, and Snack labels, you can specifically set a rule to be active for a **specific meal type** or even a **specific day of the week.**

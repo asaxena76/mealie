@@ -64,6 +64,44 @@
       </v-menu>
       <v-btn :icon="$globals.icons.chevronRight" flat rounded="md" density="comfortable" @click="() => changeWeek(1)" />
     </div>
+    <v-sheet
+      v-if="activeDiners.length"
+      class="mb-3 pa-3 rounded border"
+      color="transparent"
+    >
+      <div class="d-flex flex-wrap align-center ga-2">
+        <span class="text-subtitle-2 me-1">
+          {{ $t("meal-plan.show-meals-for") }}
+        </span>
+        <v-chip
+          size="small"
+          :variant="selectedDinerIds.length ? 'outlined' : 'flat'"
+          :color="selectedDinerIds.length ? undefined : 'primary'"
+          :aria-pressed="!selectedDinerIds.length"
+          @click="selectedDinerIds = []"
+        >
+          {{ $t("meal-plan.all-diners") }}
+        </v-chip>
+        <v-chip
+          v-for="diner in activeDiners"
+          :key="diner.id"
+          size="small"
+          :variant="selectedDinerIds.includes(diner.id) ? 'flat' : 'outlined'"
+          :color="diner.color || (selectedDinerIds.includes(diner.id) ? 'primary' : undefined)"
+          :aria-pressed="selectedDinerIds.includes(diner.id)"
+          @click="toggleDinerFilter(diner.id)"
+        >
+          <span v-if="diner.emoji" class="me-1">{{ diner.emoji }}</span>
+          {{ diner.abbreviation }}
+          <v-tooltip activator="parent" location="top">
+            {{ diner.name }}
+          </v-tooltip>
+        </v-chip>
+      </div>
+      <div v-if="selectedDinerIds.length" class="text-caption text-medium-emphasis mt-2">
+        {{ $t("meal-plan.diner-filter-description") }}
+      </div>
+    </v-sheet>
     <div class="d-flex justify-end">
       <BaseButtonGroup
         class="d-flex"
@@ -104,7 +142,7 @@
     </div>
     <div>
       <NuxtPage
-        :mealplans="mealsByDate"
+        :mealplans="visibleMealsByDate"
         :actions="actions"
       />
     </div>
@@ -120,6 +158,7 @@ import { useAddToShoppingListDialog } from "~/composables/shopping-list-page/use
 import { useMealplans } from "~/composables/use-group-mealplan";
 import { useHouseholdSelf } from "~/composables/use-households";
 import { useUserMealPlanPreferences } from "~/composables/use-users/preferences";
+import { mealPlanMatchesDinerFilter } from "~/lib/meal-plan/diner-filter";
 
 const TABS = {
   view: "household-mealplan-planner-view",
@@ -130,7 +169,15 @@ const route = useRoute();
 const router = useRouter();
 const i18n = useI18n();
 const { household, actions: householdActions } = useHouseholdSelf();
+const { activeDiners } = useHouseholdDiners();
 const { shoppingLists, open: shoppingListDialog, addAllToList } = useAddToShoppingListDialog();
+const selectedDinerIds = ref<string[]>([]);
+
+function toggleDinerFilter(dinerId: string) {
+  selectedDinerIds.value = selectedDinerIds.value.includes(dinerId)
+    ? selectedDinerIds.value.filter(id => id !== dinerId)
+    : [...selectedDinerIds.value, dinerId];
+}
 
 useSeoMeta({
   title: i18n.t("meal-plan.dinner-this-week"),
@@ -261,18 +308,26 @@ const days = computed(() => {
   );
 });
 
-const mealsByDate = computed(() => {
+const allMealsByDate = computed(() => {
   return days.value.map((day) => {
     return { date: day, meals: filterMealByDate(day) };
   });
 });
 
+const visibleMealsByDate = computed(() => {
+  const dinerIds = new Set(selectedDinerIds.value);
+  return allMealsByDate.value.map(day => ({
+    ...day,
+    meals: day.meals.filter(meal => mealPlanMatchesDinerFilter(meal, dinerIds)),
+  }));
+});
+
 const hasRecipes = computed(() => {
-  return mealsByDate.value.some(day => day.meals.some(meal => meal.recipe));
+  return allMealsByDate.value.some(day => day.meals.some(meal => meal.recipe));
 });
 
 const weekRecipesWithScales = computed(() => {
-  return mealsByDate.value
+  return allMealsByDate.value
     .flatMap(({ meals }) => meals)
     .map(({ recipe }) => recipe)
     .filter(recipe => recipe)

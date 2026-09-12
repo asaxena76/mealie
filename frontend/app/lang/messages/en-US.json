@@ -342,7 +342,10 @@
     "cook-on": "Cook on",
     "cook-today": "Cook today",
     "also-eaten": "Also eaten {days}",
-    "from-batch": "From {day}'s batch"
+    "from-batch": "From {day}'s batch",
+    "show-meals-for": "Show meals for",
+    "all-diners": "All",
+    "diner-filter-description": "Showing meals they eat or cook, plus meals for everyone."
   },
   "migration": {
     "new-migration": "New Migration",
