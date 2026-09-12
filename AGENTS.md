@@ -8,7 +8,7 @@ This checkout is Amit's fork of Mealie and is the intended software foundation f
 - Fork remote: `https://github.com/asaxena76/mealie.git`
 - Upstream development base: `mealie-next`
 - Local feature branch: `feature/carrie-integration`
-- Deployment approach: not decided yet
+- Deployment approach: build commit-tagged Docker images from a clean checkout on Vega; stage and deploy with `deploy/vega/deploy.sh`
 
 ## Product Context
 
@@ -44,7 +44,7 @@ Future agent integrations must follow these defaults:
 
 ## Current Phase
 
-The repository is being established for future work. Do not make product-code or deployment changes until Amit selects the first scoped feature or deployment task. The next expected decision is how and where to deploy Mealie.
+The first household-planning feature models lightweight diners, cooking responsibility, and shared preparations across meal-plan entries. Vega is the selected deployment host. Follow `deploy/vega/README.md` and use its guarded script to build, stage against a copied SQLite database, deploy, or roll back. Do not bypass its backup and staging gates when changing the production image.
 
 ## Engineering Contract
 
