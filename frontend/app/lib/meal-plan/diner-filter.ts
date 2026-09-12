@@ -5,6 +5,7 @@ type FilterableMealPlan = Pick<ReadPlanEntry, "dinerSelection" | "preparation">;
 export function mealPlanMatchesDinerFilter(
   mealplan: FilterableMealPlan,
   selectedDinerIds: ReadonlySet<string>,
+  includeCooking = true,
 ) {
   if (!selectedDinerIds.size || mealplan.dinerSelection.mode === "all") {
     return true;
@@ -14,5 +15,5 @@ export function mealPlanMatchesDinerFilter(
     || mealplan.dinerSelection.diners.some(diner => selectedDinerIds.has(diner.id));
   const cookDinerId = mealplan.preparation?.cookDinerId ?? mealplan.preparation?.cookDiner?.id;
 
-  return isEating || Boolean(cookDinerId && selectedDinerIds.has(cookDinerId));
+  return isEating || (includeCooking && Boolean(cookDinerId && selectedDinerIds.has(cookDinerId)));
 }

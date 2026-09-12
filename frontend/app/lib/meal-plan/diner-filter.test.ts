@@ -40,6 +40,18 @@ describe("mealPlanMatchesDinerFilter", () => {
     expect(mealPlanMatchesDinerFilter(mealplan("selected", ["blair"], "alex"), new Set(["alex"]))).toBe(true);
   });
 
+  test("hides a cooking-only match when cooking entries are excluded", () => {
+    expect(mealPlanMatchesDinerFilter(mealplan("selected", ["blair"], "alex"), new Set(["alex"]), false)).toBe(false);
+  });
+
+  test("still shows eating matches when cooking entries are excluded", () => {
+    expect(mealPlanMatchesDinerFilter(mealplan("selected", ["alex"], "blair"), new Set(["alex"]), false)).toBe(true);
+  });
+
+  test("still shows meals for everyone when cooking entries are excluded", () => {
+    expect(mealPlanMatchesDinerFilter(mealplan("all", [], "blair"), new Set(["alex"]), false)).toBe(true);
+  });
+
   test("matches any selected diner", () => {
     expect(mealPlanMatchesDinerFilter(mealplan("selected", ["casey"], "drew"), new Set(["alex", "drew"]))).toBe(true);
   });

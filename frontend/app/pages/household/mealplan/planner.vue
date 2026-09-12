@@ -97,9 +97,20 @@
             {{ diner.name }}
           </v-tooltip>
         </v-chip>
+        <v-btn
+          size="small"
+          class="ms-sm-auto"
+          :prepend-icon="$globals.icons.chefHat"
+          :variant="includeCooking ? 'tonal' : 'outlined'"
+          :color="includeCooking ? 'primary' : undefined"
+          :aria-pressed="includeCooking"
+          @click="includeCooking = !includeCooking"
+        >
+          {{ $t("meal-plan.include-cooking") }}
+        </v-btn>
       </div>
       <div v-if="selectedDinerIds.length" class="text-caption text-medium-emphasis mt-2">
-        {{ $t("meal-plan.diner-filter-description") }}
+        {{ $t(includeCooking ? "meal-plan.diner-filter-description" : "meal-plan.diner-filter-eating-description") }}
       </div>
     </v-sheet>
     <div class="d-flex justify-end">
@@ -172,6 +183,7 @@ const { household, actions: householdActions } = useHouseholdSelf();
 const { activeDiners } = useHouseholdDiners();
 const { shoppingLists, open: shoppingListDialog, addAllToList } = useAddToShoppingListDialog();
 const selectedDinerIds = ref<string[]>([]);
+const includeCooking = ref(true);
 
 function toggleDinerFilter(dinerId: string) {
   selectedDinerIds.value = selectedDinerIds.value.includes(dinerId)
@@ -318,7 +330,7 @@ const visibleMealsByDate = computed(() => {
   const dinerIds = new Set(selectedDinerIds.value);
   return allMealsByDate.value.map(day => ({
     ...day,
-    meals: day.meals.filter(meal => mealPlanMatchesDinerFilter(meal, dinerIds)),
+    meals: day.meals.filter(meal => mealPlanMatchesDinerFilter(meal, dinerIds, includeCooking.value)),
   }));
 });
 

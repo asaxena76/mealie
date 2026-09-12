@@ -96,9 +96,9 @@ the eating planner will show which day the batch was cooked while keeping each d
 These fields are available through the household diner, meal preparation, and meal-plan APIs. A selected diner represents
 one derived portion for that eating entry; Mealie does not store a separate editable portion count for this workflow.
 
-The weekly planner can be filtered by one or more diners. A filtered view includes meals that a selected diner eats or
-cooks, while meals assigned to everyone always remain visible. This display filter does not change the complete recipe set
-used by full-week shopping-list actions.
+The weekly planner can be filtered by one or more diners. A filtered view includes meals that a selected diner eats and,
+when **Include cooking** is enabled, meals they cook. Meals assigned to everyone always remain visible. This display filter
+does not change the complete recipe set used by full-week shopping-list actions.
 
 ### Planner Rules
 

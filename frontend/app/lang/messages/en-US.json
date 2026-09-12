@@ -345,7 +345,9 @@
     "from-batch": "From {day}'s batch",
     "show-meals-for": "Show meals for",
     "all-diners": "All",
-    "diner-filter-description": "Showing meals they eat or cook, plus meals for everyone."
+    "include-cooking": "Include cooking",
+    "diner-filter-description": "Showing meals they eat or cook, plus meals for everyone.",
+    "diner-filter-eating-description": "Showing meals they eat, plus meals for everyone."
   },
   "migration": {
     "new-migration": "New Migration",
