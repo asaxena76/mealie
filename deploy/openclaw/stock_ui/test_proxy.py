@@ -273,6 +273,10 @@ def test_production_mount_requires_auth_and_keeps_gateway_private():
     assert 'data-agent="carrie"' in response.text
     assert requests[-1].url.path == "/carrie/new"
     assert "x-mealie-user" not in requests[-1].headers
+    assert "x-openclaw-scopes" not in requests[-1].headers
+    assert requests[-1].headers["x-forwarded-for"] == "192.0.2.1"
+    assert requests[-1].headers["x-forwarded-proto"] == "https"
+    assert requests[-1].headers["x-forwarded-host"] == "mealie.example.test"
     assert client.get("/carrie/control-ui-config.json").status_code == 401
     response = client.get("/carrie/control-ui-config.json", headers={"X-Mealie-Lease": lease})
     assert response.status_code == 200
@@ -287,6 +291,17 @@ def test_production_mount_requires_auth_and_keeps_gateway_private():
         headers={"origin": "https://mealie.example.test", "X-Mealie-Lease": lease},
     )
     assert client.get("/carrie/new").status_code == 401
+
+
+def test_production_asset_fetch_accepts_per_panel_lease_without_cookie():
+    client, requests = fixture_app(production=True)
+    lease = production_login(client).json()["lease"]
+    client.cookies.clear()
+    assert client.get("/carrie/assets/theme.json").status_code == 401
+    response = client.get("/carrie/assets/theme.json", headers={"X-Mealie-Lease": lease})
+    assert response.status_code == 200
+    assert "x-mealie-user" not in requests[-1].headers
+    assert "x-openclaw-scopes" not in requests[-1].headers
 
 
 def test_production_rejects_other_origins_and_households():

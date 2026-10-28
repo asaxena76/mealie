@@ -367,9 +367,17 @@ def create_app(config: Config, client: httpx.AsyncClient | None = None) -> FastA
             "apple-touch-icon.png",
             "manifest.webmanifest",
         } or path.startswith(("assets/", "fonts/", "themes/", "file-icons/", "provider-icons/", "app-art/", "chat/"))
-        headers_in = {"Accept": request.headers.get("accept", "*/*"), "Cookie": ""}
+        # Even anonymous static requests from a trusted proxy peer must identify
+        # the originating client. Do not attach identity/scopes to these assets.
+        headers_in = {
+            **{key: value for key, value in gateway_headers(config).items() if key.startswith("x-forwarded-")},
+            "Accept": request.headers.get("accept", "*/*"),
+            "Cookie": "",
+        }
         if public and config.production:
-            shell_lease = lease_for(request.cookies.get("__Secure-mealie-carrie-ui", ""))
+            shell_lease = lease_for(
+                request.headers.get("x-mealie-lease", "") or request.cookies.get("__Secure-mealie-carrie-ui", "")
+            )
             if path in {"", "new"} or path.startswith("chat/"):
                 await authenticate(shell_lease.bearer)
         if not public:
