@@ -9,10 +9,19 @@ Production remains managed by:
 - Compose project: `/home/vagabomd/services/mealie/compose.yaml`
 - Persistent SQLite data: `/home/vagabomd/services/mealie/data`
 - Carrie image override: `/home/vagabomd/services/mealie/compose.carrie.yaml`
+- Optional stock UI overlay: `/home/vagabomd/services/mealie/compose.carrie-ui.yaml`
 - Deployment backups: `/home/vagabomd/services/mealie/deployment-backups`
 
 The deployment script never stores application secrets in the repository. It
 also leaves the base production Compose file unchanged.
+
+For the same-origin Carrie UI and its separate private Gateway, first follow
+[`../openclaw/README.md`](../openclaw/README.md). The optional UI overlay is loaded
+by all production Compose operations; snapshot staging deliberately has no Carrie
+connection. Never configure snapshot staging with production agent credentials.
+Image rollback retains the UI overlay; older images ignore its settings. To disable
+Carrie independently, clear its stock Gateway URL in the overlay and recreate
+Mealie with the same three Compose files. Preserve Gateway state for recovery.
 
 ## First checkout on Vega
 

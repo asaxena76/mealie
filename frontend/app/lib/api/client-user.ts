@@ -1,4 +1,5 @@
 import { RecipeAPI } from "./user/recipes";
+import { CarrieAPI } from "./user/carrie";
 import { UserApi } from "./user/users";
 import { HouseholdAPI } from "./user/households";
 import { GroupAPI } from "./user/groups";
@@ -29,6 +30,7 @@ import { HouseholdDinerAPI, MealPreparationAPI } from "./user/household-meal-int
 import type { ApiRequestInstance } from "~/lib/api/types/non-generated";
 
 export class UserApiClient {
+  public carrie: CarrieAPI;
   public recipes: RecipeAPI;
   public users: UserApi;
   public households: HouseholdAPI;
@@ -60,6 +62,7 @@ export class UserApiClient {
   public mealPreparations: MealPreparationAPI;
 
   constructor(requests: ApiRequestInstance) {
+    this.carrie = new CarrieAPI(requests);
     // Recipes
     this.recipes = new RecipeAPI(requests);
     this.categories = new CategoriesAPI(requests);

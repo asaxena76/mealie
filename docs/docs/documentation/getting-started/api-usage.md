@@ -4,6 +4,42 @@
 
 Mealie supports long-live api tokens in the user frontend. These can be created on the `/user/profile/api-tokens` page.
 
+## Carrie conversation API (fork feature)
+
+These authenticated endpoints use the caller's household. No request may choose an agent, Gateway URL, or session key.
+Only the household configured by the administrator is enabled.
+
+For the production stock UI, status also returns `stockPath: "/carrie"` and
+`stockAgentId`; both are null when unavailable to this household. `enabled`
+describes the earlier native adapter, not the stock UI. No private Gateway address
+or credential is returned. The stock UI uses its own authenticated transport:
+`POST /carrie/__mealie__/auth` validates the Mealie bearer and exact Origin,
+returns a short-lived per-panel lease, and sets a Secure/HttpOnly shell cookie.
+The injected bridge carries that lease in dynamic requests and the first WebSocket
+frame. `DELETE` at the same route revokes the supplied `X-Mealie-Lease`. These are
+internal browser integration endpoints, not a general OpenClaw API. Only the
+configured household, agent, and chat-operation allowlist are accepted.
+
+The remaining endpoints below describe the earlier native development adapter.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/households/carrie/status` | Configuration availability, not a live health probe |
+| POST | `/api/households/carrie/history` | Recent conversation and active-run state |
+| POST | `/api/households/carrie/messages` | Submit a discussion message; returns 202 and a run ID |
+| POST | `/api/households/carrie/stop` | Stop work for this household/date range |
+
+History and stop accept `startDate`, `endDate`, optional `dinerIds` (default empty = everyone), and `includeCooking`
+(default true). Ranges are inclusive and limited to 63 days. Messages additionally require `message` (1–8000 characters)
+and a UUID `requestId`. Send the `leafEntryId` from the latest history as `expectedLeafEntryId`; use null for a new conversation.
+Reuse the **same UUID and payload** when retrying an uncertain submission. OpenClaw owns deduplication and history;
+its deduplication retention is finite, so inspect history before retrying old requests. A stale conversation returns 409;
+refresh and review it before submitting again. An unavailable connection returns a sanitized 503.
+
+Conversations are shared per instance, household, agent, and exact date range. History is limited to the latest 100 messages
+and 500 KB from OpenClaw; `truncated` indicates older history exists. Only user/assistant text is exposed, not raw tool
+results or model reasoning. These endpoints do not modify meal-plan data or create scheduled jobs.
+
 ## Key Components
 
 ### Exploring Your Local API

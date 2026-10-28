@@ -152,6 +152,17 @@ class AppSettings(AppLoggingSettings):
 
     IS_DEMO: bool = False
 
+    # Server-only OpenClaw connection. Explicit household binding prevents a shared
+    # agent's LMS credentials from being exposed to another Mealie household.
+    CARRIE_GATEWAY_URL: str = ""
+    CARRIE_GATEWAY_TOKEN: MaskedNoneString = None
+    CARRIE_AGENT_ID: str = "carrie"
+    CARRIE_HOUSEHOLD_ID: str = ""
+    CARRIE_INSTANCE_ID: str = "mealie"
+    CARRIE_PROTOCOL_VERSION: int = 4
+    CARRIE_STOCK_GATEWAY_URL: str = ""
+    CARRIE_STOCK_PUBLIC_ORIGIN: str = ""
+
     HOST_IP: str = "*"
 
     API_HOST: str = "0.0.0.0"

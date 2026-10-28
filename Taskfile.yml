@@ -86,6 +86,24 @@ tasks:
     cmds:
       - docker compose -f docker-compose.dev.yml up
 
+  dev:carrie-ui:
+    desc: runs the loopback-only stock Carrie UI experiment (see deploy/openclaw/stock_ui/README.md)
+    env:
+      CARRIE_STOCK_DEV: "1"
+      UV_FROZEN: "0"
+    requires:
+      env: [CARRIE_HOUSEHOLD_ID]
+    cmds:
+      - uv run --isolated --no-project --with-requirements deploy/openclaw/stock_ui/requirements.txt uvicorn deploy.openclaw.stock_ui.proxy:app_factory --factory --host 127.0.0.1 --port 18800 --ws-max-size 131072 --no-access-log --log-level warning
+
+  dev:carrie-ui:test:
+    desc: tests the isolated stock UI adapter without a running Gateway
+    env:
+      UV_FROZEN: "0"
+    cmds:
+      - node --test deploy/openclaw/stock_ui/bridge.test.mjs
+      - uv run --isolated --no-project --with-requirements deploy/openclaw/stock_ui/requirements-test.txt python -m pytest deploy/openclaw/stock_ui/test_proxy.py -q -o addopts=''
+
   dev:clean:
     desc: cleans up dev environment !! removes all data files !!
     vars:

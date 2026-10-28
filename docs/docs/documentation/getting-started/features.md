@@ -100,6 +100,22 @@ The weekly planner can be filtered by one or more diners. A filtered view includ
 when **Include cooking** is enabled, meals they cook. Meals assigned to everyone always remain visible. This display filter
 does not change the complete recipe set used by full-week shopping-list actions.
 
+### Discussing a week with Carrie
+
+When an administrator connects OpenClaw, the Carrie button in the meal planner opens the embedded stock OpenClaw UI,
+with conversations and rich responses. Choose a conversation and click **Share this view with Carrie** to send the
+displayed dates, selected diners, and cooking-filter setting with subsequent messages. She reads current Mealie data through
+the LMS CLI and can discuss meals, leftovers, and suggested changes. This first release is read-only: nothing discussed
+in chat saves a meal plan, shopping list, or schedule.
+
+Conversations are retained by OpenClaw and can span multiple date ranges. Changing dates, filters, or conversations
+clears shared view context; share again before sending. All signed-in members of the configured household share this
+interface, so do not use it for private health information. Your browser needs one-time manual device pairing.
+Close/reopen the panel after a session expires. Review history before retrying an uncertain submission.
+The separate earlier native development panel instead groups conversations by exact date range.
+
+Mealie remains fully usable without Carrie. See `deploy/openclaw/README.md` in this fork for administrator setup.
+
 ### Planner Rules
 
 The meal planner has the concept of plan rules. These offer a flexible way to use your organizers to customize how a random recipe is inserted into your meal plan. You can set rules to restrict the pool of recipes based on the Tags and/or Categories of a recipe. Additionally, since meal plans have a Breakfast, Lunch, Dinner, and Snack labels, you can specifically set a rule to be active for a **specific meal type** or even a **specific day of the week.**

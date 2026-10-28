@@ -7,6 +7,7 @@ MEALIE_DEPLOY_REPO_ROOT="$(cd "${MEALIE_DEPLOY_SCRIPT_DIR}/../.." && pwd)"
 MEALIE_DEPLOY_SERVICE_DIR="${MEALIE_VEGA_SERVICE_DIR:-/home/vagabomd/services/mealie}"
 MEALIE_DEPLOY_COMPOSE_FILE="${MEALIE_DEPLOY_SERVICE_DIR}/compose.yaml"
 MEALIE_DEPLOY_OVERRIDE_FILE="${MEALIE_DEPLOY_SERVICE_DIR}/compose.carrie.yaml"
+MEALIE_DEPLOY_UI_OVERRIDE_FILE="${MEALIE_DEPLOY_SERVICE_DIR}/compose.carrie-ui.yaml"
 MEALIE_DEPLOY_DATA_DIR="${MEALIE_DEPLOY_SERVICE_DIR}/data"
 MEALIE_DEPLOY_BACKUP_ROOT="${MEALIE_DEPLOY_SERVICE_DIR}/deployment-backups"
 MEALIE_DEPLOY_CONTAINER="${MEALIE_VEGA_CONTAINER:-mealie}"
@@ -65,6 +66,9 @@ compose() {
     local -a mealie_deploy_compose_args=(-f "${MEALIE_DEPLOY_COMPOSE_FILE}")
     if [[ -f "${MEALIE_DEPLOY_OVERRIDE_FILE}" ]]; then
         mealie_deploy_compose_args+=(-f "${MEALIE_DEPLOY_OVERRIDE_FILE}")
+    fi
+    if [[ -f "${MEALIE_DEPLOY_UI_OVERRIDE_FILE}" ]]; then
+        mealie_deploy_compose_args+=(-f "${MEALIE_DEPLOY_UI_OVERRIDE_FILE}")
     fi
     docker compose "${mealie_deploy_compose_args[@]}" "$@"
 }
@@ -268,9 +272,7 @@ deploy_image() {
         restore_backup "${mealie_deploy_backup}"
         exit 1
     fi
-    compose up -d --no-build "${MEALIE_DEPLOY_CONTAINER}"
-
-    if ! wait_for_health "${MEALIE_DEPLOY_CONTAINER}"; then
+    if ! compose up -d --no-build "${MEALIE_DEPLOY_CONTAINER}" || ! wait_for_health "${MEALIE_DEPLOY_CONTAINER}"; then
         docker logs --tail 100 "${MEALIE_DEPLOY_CONTAINER}" >&2 || true
         echo "Deployment failed; restoring ${mealie_deploy_backup}" >&2
         restore_backup "${mealie_deploy_backup}"

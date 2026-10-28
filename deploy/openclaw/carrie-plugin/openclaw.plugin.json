@@ -1,0 +1,29 @@
+{
+  "id": "mealie-carrie",
+  "name": "Mealie Carrie",
+  "description": "Household-bound read-only LMS access for Carrie",
+  "contracts": { "tools": ["carrie_mealie_read"] },
+  "activation": { "onStartup": true },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["executable", "agents"],
+    "properties": {
+      "executable": { "type": "string" },
+      "extraPath": { "type": "string" },
+      "agents": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile", "configPath", "householdId"],
+          "properties": {
+            "profile": { "type": "string" },
+            "configPath": { "type": "string" },
+            "householdId": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

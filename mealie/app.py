@@ -92,6 +92,9 @@ async def lifespan_fn(_: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
+    if getattr(app.state, "carrie_ui", None):
+        await app.state.carrie_ui.state.http.aclose()
+
     logger.info("-----SYSTEM SHUTDOWN----- \n")
 
 
@@ -148,6 +151,12 @@ def api_routers():
     app.include_router(router)
     app.include_router(media_router)
     app.include_router(utility_routes.router)
+
+    if settings.CARRIE_STOCK_GATEWAY_URL and not settings.TESTING:
+        from mealie.services.carrie_ui.proxy import production_app
+
+        app.state.carrie_ui = production_app()
+        app.mount("/carrie", app.state.carrie_ui)
 
     if settings.PRODUCTION and not settings.TESTING:
         spa.mount_spa(app)

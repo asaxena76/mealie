@@ -1,0 +1,5 @@
+# Standalone dev host: keep separate from the Linux dev container's .venv.
+fastapi==0.161.1
+httpx==0.28.1
+websockets==17.3
+uvicorn==0.54.0
