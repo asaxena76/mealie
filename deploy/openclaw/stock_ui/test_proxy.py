@@ -361,11 +361,23 @@ def test_production_websocket_scopes_context_and_denied_operations(monkeypatch):
             ("config.get", {}),
             ("tools.invoke", {}),
             ("chat.history", {"sessionKey": "agent:private:main"}),
+            ("chat.startup", {"shortId": "fictional-thread", "agentId": "private"}),
             ("chat.send", {"sessionKey": "agent:carrie:test", "message": "Missing view"}),
         ]:
             socket.send_json({"type": "req", "id": "denied", "method": method, "params": params})
             assert socket.receive_json()["ok"] is False
         assert len(forwarded) == 1
+        # A reopened stock UI uses startup rather than a normal history request.
+        # This read requires no shared planner context, unlike sending a message.
+        startup = {
+            "type": "req",
+            "id": "restore",
+            "method": "chat.startup",
+            "params": {"shortId": "fictional-thread", "agentId": "carrie", "limit": 100},
+        }
+        socket.send_json(startup)
+        assert socket.receive_json()["ok"]
+        assert forwarded[-1] == startup
         socket.send_json(
             {
                 "type": "req",

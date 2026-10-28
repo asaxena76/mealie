@@ -175,6 +175,8 @@ def constrain_request(frame: dict) -> None:
         "models.list",
         "users.self",
         "chat.history",
+        # Stock UI deep links resolve the thread and read its transcript together.
+        "chat.startup",
         "sessions.list",
         "sessions.get",
         "sessions.resolve",

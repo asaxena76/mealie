@@ -183,6 +183,9 @@ This preserves its separate state and conversations.
   delivery, runtime switching, and slash commands are not supported here.
   Thread organization is supported; deletion is not. Restricted cosmetic/config
   requests and disabled service-worker registration can produce console warnings.
+  Reopening a conversation uses the scoped `chat.startup` transcript read; this
+  requires no shared planner context. Sending a message still requires sharing
+  the current view explicitly.
   Do not fix these by granting broader Gateway scopes.
 - The bridge validates message origin, source window, document, and thread.
   Context is per iframe, not global browser storage. Diner UUIDs are format-checked
