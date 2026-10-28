@@ -182,6 +182,7 @@ import { addDays, differenceInCalendarDays, format, isSameDay, isValid, parseISO
 import RecipeDialogAddToShoppingList from "~/components/Domain/Recipe/RecipeDialogAddToShoppingList.vue";
 import MealPlanCarriePanel from "~/components/Domain/Mealplan/MealPlanCarriePanel.vue";
 import MealPlanCarrieStockPanel from "~/components/Domain/Mealplan/MealPlanCarrieStockPanel.vue";
+import { useUserApi } from "~/composables/api";
 import { useAddToShoppingListDialog } from "~/composables/shopping-list-page/use-add-to-shopping-list-dialog";
 import { useMealplans } from "~/composables/use-group-mealplan";
 import { useHouseholdSelf } from "~/composables/use-households";
