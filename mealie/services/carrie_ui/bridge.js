@@ -57,7 +57,7 @@
     constructor(url, protocols) {
       // The experiment never connects to a browser-selected remote Gateway.
       const target = new URL(url, location.href);
-      if (target.host !== location.host || !["/", `${prefix}/`].includes(target.pathname)) throw new Error("Carrie Gateway only");
+      if (target.host !== location.host || !["/", prefix, `${prefix}/`].includes(target.pathname)) throw new Error("Carrie Gateway only");
       target.pathname = `${prefix}/`;
       target.search = "";
       super(target.href, protocols);

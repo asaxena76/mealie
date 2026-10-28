@@ -123,6 +123,9 @@ test("production routes HTTP and WebSocket through the same-origin /carrie mount
   const h = harness("/carrie/new", true);
   assert.equal(h.notifications[0].data.sessionKey, "@new");
   assert.equal(h.connections[0], "wss://mealie.example.test/carrie/");
+  new h.window.WebSocket("wss://mealie.example.test/carrie");
+  assert.equal(h.connections[1], "wss://mealie.example.test/carrie/");
+  assert.throws(() => new h.window.WebSocket("wss://mealie.example.test/admin"));
   h.post({ type: "initialize", lease: "fictional-lease" });
   await h.window.fetch("/control-ui-config.json");
   assert.equal(h.fetches[0][0].href, "https://mealie.example.test/carrie/control-ui-config.json");
