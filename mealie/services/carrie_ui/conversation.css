@@ -1,0 +1,30 @@
+/* Presentation only. Tested with the exact stock build pinned by the proxy. */
+html[data-mealie-chat="loading"] openclaw-app,
+html[data-mealie-chat="unavailable"] openclaw-app { visibility: hidden; }
+html[data-mealie-chat] body { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+html[data-mealie-chat] openclaw-app { flex: 1; min-height: 0; overflow: hidden; }
+html[data-mealie-chat] .shell { height: 100%; min-height: 0; }
+/* Native mode removes dashboard chrome. These narrow, build-pinned overrides
+   omit controls that are not meaningful in the read-only household workflow. */
+html[data-mealie-chat] :is(
+  .native-embed-header, openclaw-agent-select,
+  .new-session-page__incognito-rail, .new-session-page__triggers,
+  .agent-chat__hint, .agent-chat__welcome-secondary,
+  .agent-chat__attach-menu, .chat-controls__permission-picker,
+  .chat-controls__model-settings, .chat-talk-control, .chat-mobile-talk-action, .context-usage,
+  .chat-pane__project-row, .chat-pane__actions,
+  .chat-side-panel, .assistant-panel, openclaw-command-palette
+) { display: none !important; }
+#mealie-conversations {
+  flex: 0 0 auto;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid #8884;
+  background: var(--bg, #faf9f7); color: var(--text, #222);
+}
+#mealie-conversations select { min-width: 160px; flex: 1; }
+#mealie-conversations button, #mealie-conversations select {
+  font: inherit; font-size: 13px; border: 1px solid #8886; border-radius: 6px;
+  padding: 6px 10px; background: transparent; color: inherit;
+}
+#mealie-conversations [role="status"] { font-size: 12px; flex-basis: 100%; }
+#mealie-conversations [role="status"]:empty { display: none; }

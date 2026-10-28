@@ -47,6 +47,23 @@ def test_stock_status_exposes_only_relative_route_for_bound_household(api_client
     assert api_client.get(f"{PREFIX}/status", headers=unique_user.token).json()["stockPath"] is None
 
 
+@pytest.mark.parametrize("focused", [True, False])
+def test_production_stock_presentation_setting_is_server_only(monkeypatch, focused):
+    from mealie.services.carrie_ui import proxy
+
+    settings = get_app_settings()
+    monkeypatch.setattr(settings, "CARRIE_HOUSEHOLD_ID", str(uuid4()))
+    monkeypatch.setattr(settings, "CARRIE_STOCK_GATEWAY_URL", "http://172.22.0.1:18792")
+    monkeypatch.setattr(settings, "CARRIE_STOCK_PUBLIC_ORIGIN", "https://mealie.example.test")
+    monkeypatch.setattr(settings, "CARRIE_STOCK_FOCUSED_UI", focused)
+    monkeypatch.setattr(proxy, "create_app", lambda config: config)
+    config = proxy.production_app()
+    assert config.focused_ui is focused
+    assert config.production
+    assert config.agent == "carrie"
+    assert config.prefix == "/carrie"
+
+
 def test_history_scope_and_secret_redaction(api_client: TestClient, unique_user: TestUser, monkeypatch):
     rpc = AsyncMock(return_value={"messages": []})
     monkeypatch.setattr(CarrieService, "rpc", rpc)

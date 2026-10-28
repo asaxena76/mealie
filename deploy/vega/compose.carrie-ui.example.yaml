@@ -5,6 +5,7 @@ services:
     environment:
       CARRIE_STOCK_GATEWAY_URL: http://172.22.0.1:18792
       CARRIE_STOCK_PUBLIC_ORIGIN: https://mealie.vagabond.in
+      CARRIE_STOCK_FOCUSED_UI: "true"
       CARRIE_AGENT_ID: carrie
       CARRIE_HOUSEHOLD_ID: REPLACE_WITH_VERIFIED_HOUSEHOLD_UUID
       # The earlier native adapter is not enabled in production.

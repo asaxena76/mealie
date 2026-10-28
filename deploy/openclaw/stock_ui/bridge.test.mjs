@@ -137,3 +137,32 @@ test("production routes HTTP and WebSocket through the same-origin /carrie mount
   assert.deepEqual(h.sent.at(-1).params.__mealieContext, context);
   await assert.rejects(h.window.fetch("https://evil.example/api"));
 });
+
+test("focused host uses a fixed Carrie thread read without sharing planner context", () => {
+  const h = harness();
+  let rows;
+  h.window.__MEALIE_CONVERSATION_HOST__ = {
+    connected: read => read(),
+    threads: value => { rows = value; },
+  };
+  h.socket.dispatchEvent(new MessageEvent("message", { data: JSON.stringify({
+    type: "res", id: "hello", ok: true, payload: { type: "hello-ok" },
+  }) }));
+  assert.equal(h.sent.at(-1).method, "sessions.list");
+  assert.equal(h.sent.at(-1).params.agentId, "carrie-dev");
+  assert.equal(h.sent.at(-1).params.__mealieContext, undefined);
+  h.socket.dispatchEvent(new MessageEvent("message", { data: JSON.stringify({
+    type: "res", id: "mealie-conversation-list", ok: true, payload: { sessions: [{ key: "agent:carrie-dev:test" }] },
+  }) }));
+  assert.equal(rows[0].key, "agent:carrie-dev:test");
+});
+
+test("focused host blocks dashboard history navigation without changing the current context", () => {
+  const h = harness("/new");
+  h.window.__MEALIE_CONVERSATION_HOST__ = { allowedRoute: path => path === "/new" };
+  h.post({ type: "share", sessionKey: "@new", context });
+  h.history.pushState({}, "", "/settings");
+  h.rpc("sessions.create", { agentId: "carrie-dev", message: "test" });
+  assert.deepEqual(h.sent.at(-1).params.__mealieContext, context);
+  assert.ok(h.notifications.every(item => item.data.path !== "/settings"));
+});

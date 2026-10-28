@@ -19,7 +19,26 @@ profile by explicit owner approval for this read-only release. That profile is n
 a database-enforced read-only credential: the fixed plugin action allowlist is
 the write boundary. A dedicated Carrie identity remains the next hardening step.
 There are no web-search, shell, scheduling, file-upload, or Mealie-write tools.
-The model selector is limited to the configured embedded-runtime model.
+The model is fixed to the configured embedded-runtime model.
+
+### Focused Carrie interface
+
+`CARRIE_STOCK_FOCUSED_UI` defaults to `true` in production. The stock chat is
+hosted through OpenClaw's native conversation contract, with a Mealie-owned
+conversation picker and small, version-pinned presentation overrides. Dashboard,
+workspace, model, attachment, voice and side-panel controls are omitted. The
+server-side authorization boundaries above remain unchanged; hiding controls is
+not a security boundary. This is a browser adaptation of a native-host contract,
+not an official web UI SDK or a fork of OpenClaw.
+
+The proxy accepts only the exact tested OpenClaw UI build fingerprint. An unknown
+build returns 502 rather than falling back to the full dashboard. Retest pairing,
+chat/new/switch/reopen, tool details and narrow layouts before upgrading OpenClaw.
+See [the adapter notes](stock_ui/README.md#focused-conversation-adapter) for the
+host contract and local test command. For an intentional presentation rollback,
+set `CARRIE_STOCK_FOCUSED_UI=false` in the private Compose overlay and recreate
+Mealie through the guarded deployment workflow. This restores the full stock UI
+but does not expand its backend permissions. Image rollback also remains available.
 
 ### Separate Gateway on Vega
 
@@ -39,6 +58,8 @@ commands so OpenClaw does not select the main Gateway service:
 
 ```bash
 openclaw --profile mealie config validate
+openclaw --profile mealie devices list
+openclaw --profile mealie devices approve REQUEST_ID
 openclaw --profile mealie models auth login --agent carrie --provider openai --device-code
 openclaw --profile mealie gateway install --port 18792 --runtime node \
   --runtime-path /absolute/path/to/node24

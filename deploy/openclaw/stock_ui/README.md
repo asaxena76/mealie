@@ -11,6 +11,45 @@ Verified against installed OpenClaw **2026.10.8**, protocol **4**, Node **24**.
 This is a version-coupled transport adapter, not an official embedding SDK.
 Retest after Gateway upgrades; do not assume another version is compatible.
 
+## Focused-conversation adapter
+
+Set `CARRIE_STOCK_FOCUSED_UI=1` when starting the **local** adapter to use the
+Carrie-only presentation. Production enables it by default. For example:
+
+```bash
+CARRIE_STOCK_FOCUSED_UI=1 task dev:carrie-ui
+```
+
+This uses OpenClaw's documented [native conversation surface](https://docs.openclaw.ai/web/control-ui/settings),
+not a fork or a rebuilt chat UI. The proxy injects a browser implementation of
+the native host contract before the stock scripts. The contract was designed for
+native hosts, so this browser adaptation is a tested experiment, not an official
+web embedding SDK. The platform marker selects desktop presentation; it grants
+no native OS access.
+
+- A small host toolbar lists up to 100 accessible Carrie conversations, refreshes
+  the list, and opens a new conversation. The existing authenticated WebSocket
+  makes the fixed `sessions.list` read; no new Gateway permissions are granted.
+- Native `navigate` commands switch conversations. Document IDs, request IDs and
+  monotonic state revisions prevent stale acknowledgements from being adopted.
+- Dashboard handoffs are rejected. A route guard limits browser-history changes
+  to Carrie chat/new routes; global dashboard shortcuts are suppressed.
+- A small stylesheet hides unsupported workspace, model, attachment, voice and
+  side-panel controls. Transcript rendering, inline tool activity, drafts, sending
+  and stopping remain stock. These presentation rules are **not authorization**.
+- The proxy requires the exact tested stock build fingerprint, otherwise it
+  returns 502 instead of embedding an untested dashboard. The stock application
+  stays hidden until the native bridge acknowledges readiness; a missing handshake
+  shows an unavailable message. Never remove this check merely to upgrade.
+
+The files are `mealie/services/carrie_ui/conversation.js` and `conversation.css`;
+the transport stays in `bridge.js`. Turning off the flag restores the normal
+stock presentation without changing conversations, pairing, credentials or data.
+Before releases and OpenClaw upgrades, retest fresh-browser pairing, desktop/mobile layout,
+thread switching/new/reopen, streaming/stop, tool details, keyboard navigation,
+and the unknown-build failure state. Shared context must still be explicitly
+selected for each conversation; no Mealie writes are enabled.
+
 ## How to use
 
 1. Open Mealie at `http://localhost:3000`, sign into the development household,
@@ -44,7 +83,8 @@ The context annotation is visible in the stock transcript in this prototype.
 | Vega LMS development API forward | Vega 127.0.0.1:19900 → local 127.0.0.1:9000 |
 
 The adapter serves stock assets unchanged and injects `bridge.js` into the HTML
-shell. The bridge wraps fetch/WebSocket transport and shares context through a
+shell, plus the conversation host script/styles when focused presentation is enabled.
+The bridge wraps fetch/WebSocket transport and shares context through a
 small origin-checked `postMessage` contract. It does not scrape the UI or rebuild
 the transcript. The adapter narrowly adjusts the stock frame-ancestors policy to
 allow the exact Mealie development origin; other CSP directives remain intact.
@@ -178,7 +218,7 @@ This preserves its separate state and conversations.
 - Carrie has only `carrie_mealie_read`, with the LMS profile fixed server-side.
   It cannot write meals, execute a general shell, read private memory, invoke
   other agents, or create schedules. Human-approved write workflows are later work.
-- The stock UI still displays some out-of-scope controls. Admin configuration,
+- With focused presentation disabled, the stock UI displays out-of-scope controls. Admin configuration,
   schedules, arbitrary tool execution, attachments, workspace changes, external
   delivery, runtime switching, and slash commands are not supported here.
   Thread organization is supported; deletion is not. Restricted cosmetic/config

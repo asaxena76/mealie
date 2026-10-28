@@ -162,6 +162,7 @@ class AppSettings(AppLoggingSettings):
     CARRIE_PROTOCOL_VERSION: int = 4
     CARRIE_STOCK_GATEWAY_URL: str = ""
     CARRIE_STOCK_PUBLIC_ORIGIN: str = ""
+    CARRIE_STOCK_FOCUSED_UI: bool = True
 
     HOST_IP: str = "*"
 

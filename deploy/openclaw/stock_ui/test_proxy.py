@@ -15,7 +15,7 @@ HOUSEHOLD = "00000000-0000-4000-8000-000000000001"
 CONTEXT = {"startDate": "2026-11-02", "endDate": "2026-11-08", "dinerIds": [], "includeCooking": False}
 
 
-def fixture_app(household=HOUSEHOLD, lease_seconds=1800, production=False):
+def fixture_app(household=HOUSEHOLD, lease_seconds=1800, production=False, focused_ui=False):
     requests = []
 
     def upstream(request):
@@ -48,9 +48,10 @@ def fixture_app(household=HOUSEHOLD, lease_seconds=1800, production=False):
             gateway="http://172.22.0.1:18792",
             agent="carrie",
             identity="mealie",
+            focused_ui=focused_ui,
         )
         if production
-        else Config(HOUSEHOLD, lease_seconds=lease_seconds)
+        else Config(HOUSEHOLD, lease_seconds=lease_seconds, focused_ui=focused_ui)
     )
     app = create_app(config, httpx.AsyncClient(transport=httpx.MockTransport(upstream)))
     if production:
@@ -86,6 +87,38 @@ def test_explicit_loopback_configuration():
             Config(HOUSEHOLD, gateway=url)
     with pytest.raises(ValueError):
         Config("")
+
+
+def test_focused_ui_pins_build_and_loads_host_before_stock_code():
+    body = f'<html data-openclaw-control-ui-build-id="{proxy.FOCUSED_UI_BUILD}"><head></head></html>'
+    result = proxy.embed_html(body, Config(HOUSEHOLD, focused_ui=True))
+    assert 'data-mealie-chat="loading"' in result
+    assert result.index("conversation.css") < result.index("conversation.js") < result.index("bridge.js")
+    for unsupported in [body.replace(proxy.FOCUSED_UI_BUILD, "next-version"), "<html><head></head></html>"]:
+        with pytest.raises(ValueError, match="Untested"):
+            proxy.embed_html(unsupported, Config(HOUSEHOLD, focused_ui=True))
+    assert "conversation.js" not in proxy.embed_html(body, Config(HOUSEHOLD))
+
+
+def test_focused_ui_assets_opt_in_and_unrecognized_build_fails_closed():
+    normal, _ = fixture_app()
+    assert normal.get("/__mealie__/conversation.js").status_code == 404
+    client, requests = fixture_app(focused_ui=True)
+    assert client.get("/__mealie__/conversation.js").status_code == 200
+    assert client.get("/__mealie__/conversation.css").headers["content-type"].startswith("text/css")
+    assert client.get("/__mealie__/unknown.js").status_code == 404
+    assert client.get("/new").status_code == 502  # Upstream fixture has no recognized build marker.
+    requests.clear()
+    assert client.get("/chat/private/secret").status_code == 404
+    assert client.get("/new?agent=private").status_code == 404
+    assert not requests
+
+
+def test_focused_production_assets_still_require_a_lease():
+    client, _ = fixture_app(production=True, focused_ui=True)
+    assert client.get("/carrie/__mealie__/conversation.js").status_code == 401
+    production_login(client)
+    assert client.get("/carrie/__mealie__/conversation.js").status_code == 200
 
 
 def test_auth_requires_mealie_origin_valid_token_and_household():

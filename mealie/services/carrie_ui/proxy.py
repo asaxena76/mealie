@@ -43,6 +43,10 @@ class PlannerContext(BaseModel):
 
 
 SCOPES = ["operator.sessions.read", "operator.sessions.write"]
+FOCUSED_UI_BUILD = (
+    "2026.10.8-release-dc2523e5a5c7-2026-10-27T05-21-21.733Z-"
+    "010f999991d275831f307093b3a46cdd2dda1bdd04a84c0c48319b2e2157fda6"
+)
 TRANSPORT_LOG = logging.getLogger("carrie.stock.transport")
 TRANSPORT_LOG.setLevel(logging.WARNING)
 
@@ -59,6 +63,7 @@ class Config:
     production: bool = False
     prefix: str = ""
     identity: str = "mealie-dev"
+    focused_ui: bool = False
 
     def __post_init__(self) -> None:
         if self.production:
@@ -244,6 +249,17 @@ def constrain_request(frame: dict) -> None:
 def embed_html(body: str, config: Config) -> str:
     import html
 
+    presentation = ""
+    if config.focused_ui:
+        # Native embed is a versioned host contract, not a general web UI SDK.
+        if f'data-openclaw-control-ui-build-id="{FOCUSED_UI_BUILD}"' not in body:
+            raise ValueError("Untested stock conversation UI build")
+        body = body.replace("<html ", '<html data-mealie-chat="loading" ', 1)
+        presentation = (
+            f'<link rel="stylesheet" href="{config.prefix}/__mealie__/conversation.css">'
+            f'<script src="{config.prefix}/__mealie__/conversation.js" '
+            f'data-prefix="{config.prefix}" data-agent="{config.agent}"></script>'
+        )
     tag = (
         f'<script src="{config.prefix}/__mealie__/bridge.js" '
         f'data-parent-origin="{html.escape(config.parent_origin, quote=True)}" '
@@ -251,7 +267,7 @@ def embed_html(body: str, config: Config) -> str:
     )
     if "<head>" not in body:
         raise ValueError("Unrecognized stock UI shell")
-    return body.replace("<head>", "<head>" + tag, 1)
+    return body.replace("<head>", "<head>" + presentation + tag, 1)
 
 
 def create_app(config: Config, client: httpx.AsyncClient | None = None) -> FastAPI:  # noqa: C901
@@ -356,8 +372,26 @@ def create_app(config: Config, client: httpx.AsyncClient | None = None) -> FastA
             lease_for(request.cookies.get("__Secure-mealie-carrie-ui", ""))
         return FileResponse(Path(__file__).with_name("bridge.js"), media_type="text/javascript")
 
+    @app.get("/__mealie__/{asset}")
+    async def presentation_asset(request: Request, asset: str):
+        if not config.focused_ui or asset not in {"conversation.js", "conversation.css"}:
+            raise HTTPException(404)
+        if config.production:
+            lease_for(request.cookies.get("__Secure-mealie-carrie-ui", ""))
+        return FileResponse(
+            Path(__file__).with_name(asset),
+            media_type="text/javascript" if asset.endswith(".js") else "text/css",
+        )
+
     @app.get("/{path:path}")
     async def stock(request: Request, path: str):
+        if config.focused_ui and (
+            path.startswith("chat/")
+            and not path.startswith(f"chat/{config.agent}/")
+            or path == "new"
+            and request.query_params.get("agent", config.agent) != config.agent
+        ):
+            raise HTTPException(404)
         # Public shell/assets contain no user data. Dynamic fetches receive a
         # per-frame lease via the injected bridge, not cookies or URL credentials.
         public = path in {
@@ -558,7 +592,12 @@ def create_app(config: Config, client: httpx.AsyncClient | None = None) -> FastA
 def app_factory() -> FastAPI:
     if os.environ.get("CARRIE_STOCK_DEV") != "1":
         raise RuntimeError("Set CARRIE_STOCK_DEV=1 to enable this development-only experiment")
-    return create_app(Config(household_id=os.environ["CARRIE_HOUSEHOLD_ID"]))
+    return create_app(
+        Config(
+            household_id=os.environ["CARRIE_HOUSEHOLD_ID"],
+            focused_ui=os.environ.get("CARRIE_STOCK_FOCUSED_UI") == "1",
+        )
+    )
 
 
 def production_app() -> FastAPI:
@@ -576,5 +615,6 @@ def production_app() -> FastAPI:
             identity="mealie",
             production=True,
             prefix="/carrie",
+            focused_ui=settings.CARRIE_STOCK_FOCUSED_UI,
         )
     )

@@ -68,6 +68,16 @@
       this.addEventListener("message", (event) => {
         let frame;
         try { frame = JSON.parse(event.data); } catch { return; }
+        if (frame.type === "res" && frame.ok && frame.payload?.type === "hello-ok") {
+          window.__MEALIE_CONVERSATION_HOST__?.connected(() => super.send(JSON.stringify({
+            type: "req", id: "mealie-conversation-list", method: "sessions.list",
+            params: { agentId: agent, limit: 100, includeDerivedTitles: true },
+          })));
+        }
+        if (frame.type === "res" && frame.id === "mealie-conversation-list") {
+          if (frame.ok) window.__MEALIE_CONVERSATION_HOST__?.threads(frame.payload?.sessions);
+          else window.__MEALIE_CONVERSATION_HOST__?.threadsError();
+        }
         const context = creations.get(frame.id);
         if (frame.type !== "res" || !context) return;
         creations.delete(frame.id);
@@ -114,6 +124,7 @@
   for (const method of ["pushState", "replaceState"]) {
     const original = history[method];
     history[method] = function (...args) {
+      if (args[2] != null && window.__MEALIE_CONVERSATION_HOST__ && !window.__MEALIE_CONVERSATION_HOST__.allowedRoute(args[2])) return;
       const result = original.apply(this, args);
       if (location.pathname !== lastPath || path() === "/new") {
         lastPath = location.pathname;
