@@ -166,3 +166,18 @@ test("focused host blocks dashboard history navigation without changing the curr
   assert.deepEqual(h.sent.at(-1).params.__mealieContext, context);
   assert.ok(h.notifications.every(item => item.data.path !== "/settings"));
 });
+
+test("focused composer is enabled only by an explicit current-view share", () => {
+  const h = harness("/new");
+  const states = [];
+  h.window.__MEALIE_CONVERSATION_HOST__ = { contextShared: value => states.push(value) };
+  h.post({ type: "share", sessionKey: "wrong-session", context });
+  assert.equal(states.length, 0);
+  h.post({ type: "share", sessionKey: "@new", context });
+  assert.equal(states.at(-1), true);
+  h.post({ type: "clear" });
+  assert.equal(states.at(-1), false);
+  h.post({ type: "share", sessionKey: "@new", context });
+  h.rpc("chat.history", { sessionKey: "agent:carrie-dev:other" });
+  assert.equal(states.at(-1), false);
+});

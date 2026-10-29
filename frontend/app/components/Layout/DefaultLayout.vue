@@ -82,8 +82,24 @@
           </template>
         </v-list>
       </v-menu>
+      <v-list v-if="isOwnGroup && stockEndpoint" nav>
+        <v-list-item
+          :prepend-icon="$globals.icons.chefHat"
+          :title="$t('carrie.title')"
+          @click="carrieOpen = true"
+        />
+      </v-list>
     </AppSidebar>
     <v-main class="pt-12">
+      <MealPlanCarrieStockPanel
+        v-if="isOwnGroup && stockEndpoint"
+        v-model="carrieOpen"
+        :context="carrieContext"
+        :diner-label="carriePlanner?.dinerLabel || $t('meal-plan.everyone')"
+        :context-label="$t(carriePlanner ? 'carrie.selected-planner-view' : 'carrie.current-week')"
+        :endpoint="stockEndpoint"
+        :agent-id="stockAgentId"
+      />
       <v-scroll-x-transition>
         <div>
           <NuxtPage />
@@ -100,6 +116,9 @@ import { useGroupSelf } from "~/composables/use-groups";
 import { useCookbookPreferences } from "~/composables/use-users/preferences";
 import { useCookbookStore, usePublicCookbookStore } from "~/composables/store/use-cookbook-store";
 import type { ReadCookBook } from "~/lib/api/types/cookbook";
+import MealPlanCarrieStockPanel from "~/components/Domain/Mealplan/MealPlanCarrieStockPanel.vue";
+import { currentCarrieWeek, useCarriePanel } from "~/composables/use-carrie-panel";
+import { useUserApi } from "~/composables/api";
 
 const i18n = useI18n();
 const { $globals } = useNuxtApp();
@@ -109,6 +128,22 @@ const { isOwnGroup } = useLoggedInState();
 const { group } = useGroupSelf();
 
 const route = useRoute();
+const { open: carrieOpen, planner: carriePlanner } = useCarriePanel();
+const defaultCarrieContext = ref(currentCarrieWeek());
+const carrieContext = computed(() => carriePlanner.value?.context || defaultCarrieContext.value);
+const stockEndpoint = ref(import.meta.dev ? "http://127.0.0.1:18800" : "");
+const stockAgentId = ref("carrie-dev");
+watch(carrieOpen, (open) => { if (open) defaultCarrieContext.value = currentCarrieWeek(); });
+watch(() => auth.user.value?.id, async (id) => {
+  carrieOpen.value = false;
+  if (!import.meta.dev) stockEndpoint.value = "";
+  if (!id || import.meta.dev) return;
+  const { data } = await useUserApi().carrie.status();
+  if (auth.user.value?.id === id && data?.stockPath === "/carrie" && data.stockAgentId) {
+    stockAgentId.value = data.stockAgentId;
+    stockEndpoint.value = "/carrie";
+  }
+}, { immediate: true });
 const groupSlug = computed(() => route.params.groupSlug as string || auth.user.value?.groupSlug || "");
 
 const cookbookPreferences = useCookbookPreferences();

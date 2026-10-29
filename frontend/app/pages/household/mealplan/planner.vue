@@ -1,14 +1,5 @@
 <template>
   <v-container>
-    <MealPlanCarriePanel v-model="carrieOpen" :context="carrieContext" :diner-label="carrieDinerLabel" />
-    <MealPlanCarrieStockPanel
-      v-if="stockEndpoint"
-      v-model="carrieStockOpen"
-      :context="carrieContext"
-      :diner-label="carrieDinerLabel"
-      :endpoint="stockEndpoint"
-      :agent-id="stockAgentId"
-    />
     <RecipeDialogAddToShoppingList
       v-if="shoppingLists"
       v-model="shoppingListDialog"
@@ -123,12 +114,6 @@
       </div>
     </v-sheet>
     <div class="d-flex justify-end ga-2">
-      <v-btn v-if="isDevelopment || !stockEndpoint" variant="tonal" color="primary" :prepend-icon="$globals.icons.chefHat" @click="carrieOpen = true">
-        {{ $t("carrie.ask") }}
-      </v-btn>
-      <v-btn v-if="stockEndpoint" variant="outlined" @click="carrieStockOpen = true">
-        {{ $t("carrie.stock-title") }}
-      </v-btn>
       <BaseButtonGroup
         class="d-flex"
         :buttons="[
@@ -180,9 +165,7 @@
 <script setup lang="ts">
 import { addDays, differenceInCalendarDays, format, isSameDay, isValid, parseISO } from "date-fns";
 import RecipeDialogAddToShoppingList from "~/components/Domain/Recipe/RecipeDialogAddToShoppingList.vue";
-import MealPlanCarriePanel from "~/components/Domain/Mealplan/MealPlanCarriePanel.vue";
-import MealPlanCarrieStockPanel from "~/components/Domain/Mealplan/MealPlanCarrieStockPanel.vue";
-import { useUserApi } from "~/composables/api";
+import { useCarriePanel } from "~/composables/use-carrie-panel";
 import { useAddToShoppingListDialog } from "~/composables/shopping-list-page/use-add-to-shopping-list-dialog";
 import { useMealplans } from "~/composables/use-group-mealplan";
 import { useHouseholdSelf } from "~/composables/use-households";
@@ -202,19 +185,7 @@ const { activeDiners } = useHouseholdDiners();
 const { shoppingLists, open: shoppingListDialog, addAllToList } = useAddToShoppingListDialog();
 const selectedDinerIds = ref<string[]>([]);
 const includeCooking = ref(true);
-const carrieOpen = ref(false);
-const isDevelopment = import.meta.dev;
-const carrieStockOpen = ref(false);
-const stockEndpoint = ref(isDevelopment ? "http://127.0.0.1:18800" : "");
-const stockAgentId = ref("carrie-dev");
-onMounted(async () => {
-  if (isDevelopment) return;
-  const { data } = await useUserApi().carrie.status();
-  if (data?.stockPath === "/carrie" && data.stockAgentId) {
-    stockAgentId.value = data.stockAgentId;
-    stockEndpoint.value = "/carrie";
-  }
-});
+const { planner: carriePlanner } = useCarriePanel();
 const carrieContext = computed(() => ({
   startDate: format(weekRange.value.start, "yyyy-MM-dd"),
   endDate: format(weekRange.value.end, "yyyy-MM-dd"),
@@ -385,4 +356,8 @@ const weekRecipesWithScales = computed(() => {
     .filter(recipe => recipe)
     .map(recipe => ({ scale: 1, ...recipe }));
 });
+watch([carrieContext, carrieDinerLabel], ([context, dinerLabel]) => {
+  carriePlanner.value = { context, dinerLabel };
+}, { immediate: true, flush: "sync" });
+onUnmounted(() => { carriePlanner.value = null; });
 </script>

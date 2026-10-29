@@ -5,13 +5,14 @@ html[data-mealie-chat] body { display: flex; flex-direction: column; height: 100
 html[data-mealie-chat] openclaw-app { flex: 1; min-height: 0; overflow: hidden; }
 html[data-mealie-chat] .shell { height: 100%; min-height: 0; }
 /* Native mode removes dashboard chrome. These narrow, build-pinned overrides
-   omit controls that are not meaningful in the read-only household workflow. */
+   omit unsupported workspace, upload and voice controls, not chat settings. */
 html[data-mealie-chat] :is(
   .native-embed-header, openclaw-agent-select,
   .new-session-page__incognito-rail, .new-session-page__triggers,
   .agent-chat__hint, .agent-chat__welcome-secondary,
   .agent-chat__attach-menu, .chat-controls__permission-picker,
-  .chat-controls__model-settings, .chat-talk-control, .chat-mobile-talk-action, .context-usage,
+  .chat-controls__provider-model-group:has(.chat-controls__account-heading),
+  .chat-talk-control, .chat-mobile-talk-action,
   .chat-pane__project-row, .chat-pane__actions,
   .chat-side-panel, .assistant-panel, openclaw-command-palette
 ) { display: none !important; }

@@ -2,7 +2,10 @@
 
 ## Production: embedded stock OpenClaw UI
 
-The planner opens the stock UI at **`https://mealie.vagabond.in/carrie/`**.
+The Carrie sidebar entry opens the stock UI throughout the signed-in application,
+at **`https://mealie.vagabond.in/carrie/`**. The planner's legacy Ask Carrie button
+is removed. Planner dates and diner filters are attached automatically; elsewhere
+the panel explicitly shows the current Monday–Sunday week as its context.
 Cloudflare continues to tunnel only to Mealie on Vega. Mealie authenticates and
 proxies the limited UI/HTTP/WebSocket surface to a separate Vega Gateway, bound
 to the private Docker bridge. No main Gateway or Tailscale hostname is exposed.
@@ -14,19 +17,53 @@ limits, and strips browser identity/forwarding headers. The Gateway independentl
 restricts the identity to Carrie and session read/write. Device pairing remains
 manual. No administrator token is sent to the browser.
 
-The model has only `carrie_mealie_read`. It uses the existing non-admin `vega` LMS
-profile by explicit owner approval for this read-only release. That profile is not
+The default provisioning grants only `carrie_mealie_read`. The initial release used
+the existing non-admin `vega` LMS profile by explicit owner approval. That profile is not
 a database-enforced read-only credential: the fixed plugin action allowlist is
 the write boundary. A dedicated Carrie identity remains the next hardening step.
-There are no web-search, shell, scheduling, file-upload, or Mealie-write tools.
+Without the workflow opt-in below there are no web-search or Mealie-write tools.
+Shell, scheduling and file-upload tools remain unavailable in this integration.
 The model is fixed to the configured embedded-runtime model.
+
+### Opt-in workflow tools (development first)
+
+Provisioning remains read-only by default. `enable-workflows.mjs` explicitly enables
+recipe creation/content replacement and meal-entry creation/editing/deletion via
+`lms mealie`, plus public `web_search` and `web_fetch`. Shopping-list writes are
+not supported by the current LMS CLI. This is not arbitrary shell or Mealie
+administrator access: executable, profile, config and household remain fixed.
+
+Install the official `@openclaw/parallel-plugin` in the target isolated Gateway
+first. Copy this repository's plugin and `CARRIE-WORKFLOW-AGENTS.md` to a dedicated
+directory, then run with Node 24 and the target Gateway's `OPENCLAW_STATE_DIR`:
+
+```bash
+node enable-workflows.mjs /absolute/config.json carrie-dev \
+  /absolute/carrie-plugin /absolute/meal-planner-carrie/SKILL.md \
+  /absolute/CARRIE-WORKFLOW-AGENTS.md /absolute/openclaw/dist/index.js --confirm
+```
+
+The script validates before replacing configuration and backs up configuration
+and workspace instructions. Restart only that Gateway and start a new conversation.
+The canonical skill is read in place through a fixed-file tool; no private memory
+is copied or exposed. Parallel's key-free search receives search queries; keep
+household/private details out of them. Web fetch is for public pages, not internal
+services or a full JavaScript browser.
+
+Draft, explicit approval, re-read, apply and read-back are conversational skill
+instructions, **not an enforced approval gate**. Tools enforce allowed commands,
+arguments and household binding, and never automatically retry uncertain writes.
+Validate against development Mealie before separately enabling production writes.
 
 ### Focused Carrie interface
 
 `CARRIE_STOCK_FOCUSED_UI` defaults to `true` in production. The stock chat is
 hosted through OpenClaw's native conversation contract, with a Mealie-owned
 conversation picker and small, version-pinned presentation overrides. Dashboard,
-workspace, model, attachment, voice and side-panel controls are omitted. The
+workspace, attachment, voice and side-panel controls are omitted. Stock model,
+reasoning-effort and context-usage controls remain visible. The current Gateway
+and proxy permit only `openai/gpt-5.6-sol` using the embedded OpenClaw runtime;
+adding models requires updating both allowlists and retesting. The
 server-side authorization boundaries above remain unchanged; hiding controls is
 not a security boundary. This is a browser adaptation of a native-host contract,
 not an official web UI SDK or a fork of OpenClaw.
@@ -82,15 +119,18 @@ with a fresh backup. **Carrie stays disabled in snapshot staging**; never point
 that snapshot at the production LMS credentials.
 
 Verify `/api/app/about`, unauthenticated `/carrie/new` returning 401, authenticated
-planner launch, manual pairing, thread creation/reopening, and an explicitly
-shared date/diner context. All browser traffic must stay under the Mealie origin.
-Test the read tool against Mealie and confirm no writes. Do not enable the old
+planner launch, manual pairing, thread creation/reopening, and automatically
+synchronized date/diner context. All browser traffic must stay under the Mealie origin.
+Test the read tool against Mealie. For a workflow-enabled deployment, also verify
+web search, a dry run and an explicitly approved fictional test entry, then clean
+up that exact entry. Do not enable the old
 native adapter's `CARRIE_GATEWAY_URL`/token in production.
 
 Leases expire after 30 minutes; close/reopen Carrie to reconnect. Signing out,
 closing the panel, or restarting Mealie invalidates its live leases. Conversations
-remain in OpenClaw. Changing the planner range/filter clears shared context;
-click **Share this view** for the selected thread before sending. Model execution
+remain in OpenClaw. Opening/switching threads and changing the planner range/filter
+automatically synchronize the current view before sending. This is context, not
+approval to modify data. Model execution
 and LMS calls run on Vega, not in the browser. Use the configured public HTTPS
 origin for Carrie; direct LAN HTTP access is intentionally not accepted.
 

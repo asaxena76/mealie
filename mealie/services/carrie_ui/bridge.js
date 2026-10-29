@@ -25,9 +25,12 @@
     headers.set("X-Mealie-Lease", await leaseReady);
     return stockFetch(input instanceof Request ? new Request(url, input) : url, { ...init, headers, credentials: "omit" });
   };
-  const notify = (type, extra = {}) => window.parent.postMessage({
-    source: "mealie-stock-ui", version: 1, documentId, type, sessionKey, path: location.pathname, ...extra,
-  }, parentOrigin);
+  const notify = (type, extra = {}) => {
+    window.__MEALIE_CONVERSATION_HOST__?.contextShared?.(Boolean(shared));
+    window.parent.postMessage({
+      source: "mealie-stock-ui", version: 1, documentId, type, sessionKey, path: location.pathname, ...extra,
+    }, parentOrigin);
+  };
   const selectSession = (key) => {
     if (typeof key !== "string" || key === sessionKey) return;
     sessionKey = key;
@@ -111,7 +114,7 @@
           notify("context-needed");
           queueMicrotask(() => this.dispatchEvent(new MessageEvent("message", { data: JSON.stringify({
             type: "res", id: frame.id, ok: false,
-            error: { code: "INVALID_REQUEST", message: "Share the Mealie view using the panel toolbar, then send again." },
+            error: { code: "INVALID_REQUEST", message: "The current Mealie view is still connecting. Please retry in a moment." },
           }) })));
           return;
         }

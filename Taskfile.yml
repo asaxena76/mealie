@@ -102,6 +102,7 @@ tasks:
       UV_FROZEN: "0"
     cmds:
       - node --test deploy/openclaw/stock_ui/bridge.test.mjs deploy/openclaw/stock_ui/conversation.test.mjs
+      - node --test deploy/openclaw/carrie-plugin/*.test.js
       - uv run --isolated --no-project --with-requirements deploy/openclaw/stock_ui/requirements-test.txt python -m pytest deploy/openclaw/stock_ui/test_proxy.py -q -o addopts=''
 
   dev:clean:

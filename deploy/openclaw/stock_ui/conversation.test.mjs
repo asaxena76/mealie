@@ -5,11 +5,19 @@ import test from "node:test";
 
 const source = fs.readFileSync(new URL("../../../mealie/services/carrie_ui/conversation.js", import.meta.url), "utf8");
 
+test("focused presentation preserves stock model, effort and context controls", () => {
+  const css = fs.readFileSync(new URL("../../../mealie/services/carrie_ui/conversation.css", import.meta.url), "utf8");
+  assert.doesNotMatch(css, /\.chat-controls__model-settings|\.context-usage/);
+  assert.match(css, /\.chat-controls__permission-picker/);
+  assert.match(css, /\.agent-chat__attach-menu/);
+});
+
 function harness() {
   const commands = [];
   const handlers = {};
   const timers = [];
   const nodes = [];
+  const composers = [];
   let nextId = 0;
   class Element {
     constructor(tag) { this.tag = tag; this.children = []; this.listeners = {}; this.value = ""; nodes.push(this); }
@@ -24,6 +32,7 @@ function harness() {
     currentScript: { dataset: { prefix: "/carrie", agent: "carrie" } },
     documentElement: { dataset: {} }, body: new Element("body"),
     createElement: tag => new Element(tag),
+    querySelectorAll: selector => { assert.equal(selector, ".agent-chat__composer-input-row, .chat-send-btn--send, .new-session-page__start-submit"); return composers; },
     addEventListener: (type, listener) => { handlers[type] = listener; },
   };
   const window = {
@@ -37,12 +46,38 @@ function harness() {
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     Option: class { constructor(text, value) { this.text = text; this.value = value; } },
     setTimeout: callback => timers.push(callback),
+    MutationObserver: class { constructor(callback) { handlers.mutation = callback; } observe() {} },
   });
   handlers.DOMContentLoaded();
   const post = message => window.webkit.messageHandlers.openclawConversation.postMessage({ contract: 1, documentId: "doc-1", ...message });
   const ready = () => { window.__OPENCLAW_NATIVE_CONVERSATION_DOCUMENT__ = { contract: 1, documentId: "doc-1" }; return post({ type: "ready", surface: "conversation", capabilities: ["navigate"] }); };
-  return { window, document, commands, handlers, timers, nodes, post, ready, location, host: window.__MEALIE_CONVERSATION_HOST__ };
+  return { window, document, commands, handlers, timers, nodes, composers, post, ready, location, host: window.__MEALIE_CONVERSATION_HOST__ };
 }
+
+test("unshared composers stay inert across renders; sharing enables only our guards", () => {
+  const h = harness();
+  const composer = { inert: false };
+  const stockDisabled = { inert: true };
+  h.composers.push(composer, stockDisabled);
+  h.handlers.mutation();
+  assert.equal(composer.inert, true);
+  const notice = h.nodes.find(node => node.id === "mealie-context-notice");
+  assert.match(notice.textContent, /Connecting the current meal-plan view/);
+  h.host.contextShared(true);
+  assert.equal(composer.inert, false);
+  assert.equal(stockDisabled.inert, true);
+  assert.equal(notice.textContent, "");
+  h.host.contextShared(false);
+  assert.equal(composer.inert, true);
+  const replacement = { inert: false };
+  h.composers.push(replacement);
+  h.handlers.mutation();
+  assert.equal(replacement.inert, true);
+  // A submit button changing to Stop is no longer a guarded control.
+  h.composers.splice(h.composers.indexOf(replacement), 1);
+  h.handlers.mutation();
+  assert.equal(replacement.inert, false);
+});
 
 test("native contract readiness is document-bound and unavailable fails closed", async () => {
   const h = harness();

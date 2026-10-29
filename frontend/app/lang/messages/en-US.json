@@ -350,11 +350,16 @@
     "diner-filter-eating-description": "Showing meals they eat, plus meals for everyone."
   },
   "carrie": {
+    "agent-assisted": "Agent-assisted",
+    "selected-planner-view": "Selected planner view",
+    "current-week": "Current week · Monday–Sunday",
     "stock-title": "Carrie · OpenClaw UI",
     "stock-dev": "Development only",
     "stock-share": "Share this view with Carrie",
     "stock-shared": "View shared with this conversation",
     "stock-not-shared": "Choose a conversation, then share this view before sending.",
+    "stock-context-synced": "Current planner view is included automatically with messages.",
+    "stock-context-syncing": "Connecting the current planner view…",
     "stock-width": "Panel width",
     "stock-cooking-on": "Cooking matches included",
     "stock-cooking-off": "Dining matches only",

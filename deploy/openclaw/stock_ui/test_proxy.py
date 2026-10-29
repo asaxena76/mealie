@@ -268,6 +268,23 @@ def test_thread_organization_does_not_allow_privilege_changes():
         constrain_request({"method": "sessions.patch", "params": {"key": "example", "model": "another-model"}})
 
 
+@pytest.mark.parametrize("method", ["chat.send", "sessions.create", "sessions.patch"])
+def test_chat_settings_keep_configured_model_and_embedded_runtime(method):
+    constrain_request(
+        {
+            "method": method,
+            "params": {
+                "model": "openai/gpt-5.6-sol",
+                "agentRuntime": "openclaw",
+                "thinkingLevel": "high",
+            },
+        }
+    )
+    for override in ({"model": "other/model"}, {"agentRuntime": "codex"}, {"toolOverrides": {"exec": True}}):
+        with pytest.raises(ValueError):
+            constrain_request({"method": method, "params": override})
+
+
 def test_new_conversation_requires_context_and_fixed_agent():
     frame = {
         "method": "sessions.create",

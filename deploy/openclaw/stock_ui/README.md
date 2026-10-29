@@ -2,7 +2,9 @@
 
 The planner's **Carrie · OpenClaw UI** button embeds the stock Control UI served by
 an isolated Gateway on Vega. It retains OpenClaw's conversations, composer, and
-tool-activity display. The existing **Ask Carrie** panel remains unchanged.
+tool-activity display. The global **Carrie** sidebar entry replaces the legacy
+planner-only **Ask Carrie** panel. Outside the planner it uses the current week;
+inside the planner it automatically follows its dates and diner filters.
 This page covers only the development instance. For the separate production
 Gateway and same-origin `/carrie/` deployment, see [../README.md](../README.md).
 There are no database migrations, meal writes, or schedules in either instance.
@@ -34,8 +36,11 @@ no native OS access.
   monotonic state revisions prevent stale acknowledgements from being adopted.
 - Dashboard handoffs are rejected. A route guard limits browser-history changes
   to Carrie chat/new routes; global dashboard shortcuts are suppressed.
-- A small stylesheet hides unsupported workspace, model, attachment, voice and
-  side-panel controls. Transcript rendering, inline tool activity, drafts, sending
+- A small stylesheet hides unsupported workspace, attachment, voice and
+  side-panel controls. Stock model/effort settings and context usage stay visible.
+  Model mutations are limited to `openai/gpt-5.6-sol` and the embedded runtime;
+  keep the proxy allowlist aligned with the dedicated Gateway when adding models.
+  Transcript rendering, inline tool activity, drafts, sending
   and stopping remain stock. These presentation rules are **not authorization**.
 - The proxy requires the exact tested stock build fingerprint, otherwise it
   returns 502 instead of embedding an untested dashboard. The stock application
@@ -47,8 +52,8 @@ the transport stays in `bridge.js`. Turning off the flag restores the normal
 stock presentation without changing conversations, pairing, credentials or data.
 Before releases and OpenClaw upgrades, retest fresh-browser pairing, desktop/mobile layout,
 thread switching/new/reopen, streaming/stop, tool details, keyboard navigation,
-and the unknown-build failure state. Shared context must still be explicitly
-selected for each conversation; no Mealie writes are enabled.
+context synchronization before sending, and the unknown-build failure state.
+Current context is attached automatically per conversation; no Mealie writes are enabled.
 
 ## How to use
 
@@ -56,18 +61,23 @@ selected for each conversation; no Mealie writes are enabled.
    and open the meal planner. Choose the dates and diner/cooking filters.
 2. Open **Carrie · OpenClaw UI**. A new browser may require one-time device pairing
    on the isolated Gateway (instructions below). There is no automatic pairing.
-3. Choose a conversation or **New conversation**, then click **Share this view
-   with Carrie** in the Mealie toolbar. Send a plain-text request in the stock UI.
+3. Choose a conversation or **New conversation**, then send a plain-text request.
+   The current dates and diner/cooking filters are attached automatically.
+   In focused mode the composer stays inactive until context connects, with an inline
+   instruction. This prevents stock new-session optimistic navigation from getting
+   stuck after a rejected unshared send; drafts are preserved. The transport and
+   server still reject unshared sends independently of this presentation guard.
 4. Carrie receives the dates, selected diner UUIDs, and cooking-filter flag with
    each message, and can read the development data through the fixed LMS profile.
    An empty diner selection means everyone. Context is an intent hint, not a
    database snapshot or authorization boundary; Carrie still reads current data.
 
 Changing filters, switching conversations, opening a new conversation, or closing
-and reopening the panel clears sharing. Re-share before sending. The panel remembers
+and reopening the panel replaces the context automatically. The panel remembers
 the last thread while the planner component is mounted; a full page reload starts
 at New conversation. Old context remains in conversation history, so the latest
-explicitly shared context accompanies every subsequent message.
+current view context accompanies every subsequent message. Context synchronization
+does not approve any recipe, meal-plan, shopping, or preparation changes.
 
 This isolated instance has **new conversations and separate model credentials**.
 It does not import the main Gateway's conversations or Carrie's private memory.
@@ -224,8 +234,8 @@ This preserves its separate state and conversations.
   Thread organization is supported; deletion is not. Restricted cosmetic/config
   requests and disabled service-worker registration can produce console warnings.
   Reopening a conversation uses the scoped `chat.startup` transcript read; this
-  requires no shared planner context. Sending a message still requires sharing
-  the current view explicitly.
+  requires no planner context. Sending a message requires valid current-view
+  context, synchronized automatically by the Mealie panel.
   Do not fix these by granting broader Gateway scopes.
 - The bridge validates message origin, source window, document, and thread.
   Context is per iframe, not global browser storage. Diner UUIDs are format-checked
@@ -251,8 +261,8 @@ uv run --isolated --no-project \
 Expected: only session read/write scopes, `agents.list` and `sessions.list`
 allowed, `config.get` and `tools.invoke` denied. It prints no credentials/history.
 
-Browser smoke test: share dates/filters, ask Carrie to read meals and diners
+Browser smoke test: choose dates/filters, ask Carrie to read meals and diners
 without changing data, verify the answer and tool activity; switch/new/reopen
-conversations and confirm sharing clears. Repeat in two tabs with different
+conversations and confirm context updates automatically. Repeat in two tabs with different
 filters. The bridge's automated tests cover cross-tab/document/session isolation
 and late replies after context is cleared. Run `task ui:check` for Mealie changes.

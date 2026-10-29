@@ -159,7 +159,7 @@ def annotate_send(frame: dict, agent: str) -> dict:
     # Command execution is not part of the meal-planning proof of concept.
     # Prefixing prevents ordinary slash interpretation without requesting admin.
     params[message_field] = (
-        "[Mealie planner context — explicitly shared for this message]\n"
+        "[Mealie planner context — current view for this message]\n"
         + context.model_dump_json(by_alias=True)
         + "\n[/Mealie planner context]\n\n"
         + message
@@ -222,6 +222,10 @@ def constrain_request(frame: dict) -> None:
             raise ValueError("Execution, attachments, and workspace changes are not part of this prototype")
     if params.get("agentRuntime") not in (None, "openclaw"):
         raise ValueError("Embedded runtime only")
+    # Match the dedicated Gateway's configured model. Do not let the picker
+    # select arbitrary provider/runtime combinations via a crafted request.
+    if params.get("model") not in (None, "", "openai/gpt-5.6-sol"):
+        raise ValueError("Model is not configured for Carrie")
     if method == "sessions.patch":
         allowed = {
             "key",
@@ -238,12 +242,14 @@ def constrain_request(frame: dict) -> None:
             "unread",
             "expectedMarkedUnreadAt",
             "thinkingLevel",
+            "model",
+            "agentRuntime",
             "fastMode",
             "reasoningLevel",
             "verboseLevel",
         }
         if set(params) - allowed:
-            raise ValueError("Only conversation organization is supported")
+            raise ValueError("Only conversation organization and chat settings are supported")
 
 
 def embed_html(body: str, config: Config) -> str:
@@ -542,7 +548,7 @@ def create_app(config: Config, client: httpx.AsyncClient | None = None) -> FastA
                                         "code": "INVALID_REQUEST",
                                         "message": (
                                             "This panel supports plain chat and thread organization only. "
-                                            "Share the current Mealie view before sending."
+                                            "Wait for the current Mealie view to connect before sending."
                                         ),
                                     },
                                 }

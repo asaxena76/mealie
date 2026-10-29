@@ -8,11 +8,41 @@
   let status;
   let requestThreads;
   let selectedSession = "";
+  let contextShared = false;
+  let contextNotice;
+  const guardedComposers = new Set();
   const pending = new Map();
   const root = document.documentElement;
   root.dataset.mealieChat = "loading";
   window.__OPENCLAW_NATIVE_EMBED__ = { platform: "macos", formFactor: "desktop", surface: "conversation" };
   window.__OPENCLAW_NATIVE_CONVERSATION__ = { contract: 1 };
+
+  // Stock new-session submission optimistically changes views before its RPC
+  // completes. Prevent an unshared submission before that transition, rather
+  // than relying on the transport rejection to restore the stock composer.
+  // These selectors are covered by the exact stock-build pin in the proxy.
+  const guardComposers = () => {
+    // Guard inputs and submit, not the entire footer: Stop generating must
+    // remain usable even if navigation or a changed view invalidates sharing.
+    const composers = Array.from(document.querySelectorAll(
+      ".agent-chat__composer-input-row, .chat-send-btn--send, .new-session-page__start-submit",
+    ));
+    for (const composer of guardedComposers) {
+      if (contextShared || !composers.includes(composer)) {
+        composer.inert = false;
+        guardedComposers.delete(composer);
+      }
+    }
+    for (const composer of composers) {
+      if (!contextShared && !composer.inert) {
+        composer.inert = true;
+        guardedComposers.add(composer);
+      }
+    }
+    const notice = contextShared ? ""
+      : "Connecting the current meal-plan view… Your draft is kept.";
+    if (contextNotice && contextNotice.textContent !== notice) contextNotice.textContent = notice;
+  };
 
   const validKey = key => typeof key === "string" && key.startsWith(`agent:${agent}:`);
   const allowedRoute = value => {
@@ -75,6 +105,7 @@
   // Fixed, read-only thread request via the existing authenticated transport.
   window.__MEALIE_CONVERSATION_HOST__ = {
     allowedRoute,
+    contextShared(value) { contextShared = value === true; guardComposers(); },
     connected(readThreads) { requestThreads = readThreads; requestThreads(); },
     threadsError() { if (status) status.textContent = "Could not refresh conversations. Close and reopen the panel if it has expired."; },
     threads(rows) {
@@ -114,10 +145,17 @@
     };
     status = document.createElement("span");
     status.setAttribute("role", "status");
+    contextNotice = document.createElement("span");
+    contextNotice.id = "mealie-context-notice";
+    contextNotice.setAttribute("role", "status");
     toolbar.append(list,
       button("Refresh conversations", () => requestThreads?.()),
-      button("New conversation", () => location.assign(`${prefix}/new?agent=${encodeURIComponent(agent)}`)), status);
+      button("New conversation", () => location.assign(`${prefix}/new?agent=${encodeURIComponent(agent)}`)), status, contextNotice);
     document.body.prepend(toolbar);
+    new MutationObserver(guardComposers).observe(document.body, {
+      childList: true, subtree: true, attributes: true, attributeFilter: ["class"],
+    });
+    guardComposers();
     requestThreads?.();
     setTimeout(() => {
       if (!documentId) {

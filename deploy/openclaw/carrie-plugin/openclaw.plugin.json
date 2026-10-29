@@ -1,8 +1,8 @@
 {
   "id": "mealie-carrie",
   "name": "Mealie Carrie",
-  "description": "Household-bound read-only LMS access for Carrie",
-  "contracts": { "tools": ["carrie_mealie_read"] },
+  "description": "Household-bound LMS access for Carrie with opt-in writes",
+  "contracts": { "tools": ["carrie_mealie_read", "carrie_mealie_write", "carrie_workflow"] },
   "activation": { "onStartup": true },
   "configSchema": {
     "type": "object",
@@ -20,7 +20,9 @@
           "properties": {
             "profile": { "type": "string" },
             "configPath": { "type": "string" },
-            "householdId": { "type": "string" }
+            "householdId": { "type": "string" },
+            "writesEnabled": { "type": "boolean", "default": false },
+            "skillPath": { "type": "string" }
           }
         }
       }

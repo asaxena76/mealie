@@ -8,10 +8,10 @@
     <div class="d-flex flex-column h-100">
       <div class="d-flex align-center pa-3 ga-2">
         <h2 class="text-h6">
-          {{ $t("carrie.stock-title") }}
+          {{ $t("carrie.title") }}
         </h2>
         <v-chip size="small">
-          {{ $t(isDevelopment ? "carrie.stock-dev" : "carrie.read-only") }}
+          {{ $t(isDevelopment ? "carrie.stock-dev" : "carrie.agent-assisted") }}
         </v-chip>
         <v-spacer />
         <v-btn icon variant="text" :aria-label="$t('general.close')" @click="open = false">
@@ -19,6 +19,9 @@
         </v-btn>
       </div>
       <div class="px-3 pb-2">
+        <div v-if="contextLabel" class="text-caption">
+          {{ contextLabel }}
+        </div>
         <div class="text-body-2">
           {{ context.startDate }} – {{ context.endDate }} · {{ dinerLabel }}
         </div>
@@ -26,10 +29,7 @@
           {{ $t(context.includeCooking ? "carrie.stock-cooking-on" : "carrie.stock-cooking-off") }}
         </div>
         <div class="d-flex align-center ga-2 mt-2">
-          <v-btn size="small" color="primary" :disabled="!documentId || !sessionKey" @click="share">
-            {{ $t("carrie.stock-share") }}
-          </v-btn>
-          <span class="text-caption" role="status">{{ $t(shared ? "carrie.stock-shared" : "carrie.stock-not-shared") }}</span>
+          <span class="text-caption" role="status">{{ $t(shared ? "carrie.stock-context-synced" : "carrie.stock-context-syncing") }}</span>
         </div>
         <v-slider
           v-if="!$vuetify.display.xs"
@@ -66,7 +66,7 @@
 import type { CarrieContext } from "~/lib/api/types/carrie";
 
 const open = defineModel<boolean>({ default: false });
-const props = defineProps<{ context: CarrieContext; dinerLabel: string; endpoint: string; agentId: string }>();
+const props = defineProps<{ context: CarrieContext; dinerLabel: string; endpoint: string; agentId: string; contextLabel?: string }>();
 const auth = useAuthBackend();
 const isDevelopment = import.meta.dev;
 const target = new URL(props.endpoint, window.location.origin);
@@ -112,9 +112,12 @@ function receive(event: MessageEvent) {
   sessionKey.value = typeof data.sessionKey === "string" ? data.sessionKey : null;
   if (["session", "cleared", "context-needed"].includes(data.type)) shared.value = false;
   if (data.type === "shared") shared.value = data.revision === revision.value;
+  if (["ready", "session", "cleared", "context-needed"].includes(data.type)
+    || (data.type === "shared" && !shared.value)) share();
 }
 
 function share() {
+  if (!open.value || !documentId.value || !sessionKey.value) return;
   post("share", { sessionKey: sessionKey.value, context: JSON.parse(revision.value), revision: revision.value });
 }
 
@@ -160,7 +163,11 @@ function revoke(key = lease) {
   if (key === lease) lease = "";
 }
 
-watch(revision, () => { shared.value = false; post("clear"); });
+watch(revision, () => {
+  shared.value = false;
+  post("clear");
+  share();
+}, { flush: "sync" });
 watch(open, (visible) => {
   if (visible) void launch();
   else {

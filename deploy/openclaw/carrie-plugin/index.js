@@ -1,5 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { readFile } from "node:fs/promises";
+import { createWriteTool } from "./writes.js";
 
 const executeFile = promisify(execFile);
 const actions = {
@@ -10,6 +12,8 @@ const actions = {
   recipe: ["recipe", "show"],
   shopping_lists: ["shopping-list", "list"],
   shopping_list: ["shopping-list", "show"],
+  meal: ["meal-plan", "show"],
+  preparation: ["meal-preparation", "show"],
 };
 
 export function buildArguments(input) {
@@ -26,7 +30,7 @@ export function buildArguments(input) {
     }
     args.push("--start", input.start, "--end", input.end);
   }
-  if (["recipe", "shopping_list"].includes(input.action)) {
+  if (["recipe", "shopping_list", "meal", "preparation"].includes(input.action)) {
     if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,199}$/.test(input.id ?? "")) throw new Error("A valid record ID is required");
     args.push(input.id);
   }
@@ -61,7 +65,7 @@ export default {
         });
         return JSON.parse(stdout);
       }
-      return {
+      const readTool = {
         name: "carrie_mealie_read",
         label: "Read Mealie through LMS",
         description: "Read the current household meal plan, diners, cooking batches, recipes or shopping lists using lms mealie. Read meals and diners first; read recipes by ID for ingredients. Use the displayed date range. Results are paginated: fetch further pages when total_pages indicates more. This tool cannot change data.",
@@ -87,6 +91,21 @@ export default {
           }
         },
       };
-    }, { names: ["carrie_mealie_read"], optional: true });
+      const tools = [readTool];
+      const writeTool = createWriteTool(binding, run);
+      if (writeTool) tools.push(writeTool);
+      if (binding.skillPath) tools.push({
+        name: "carrie_workflow",
+        label: "Read the Carrie workflow skill",
+        description: "Read the existing canonical Carrie SKILL.md before substantive meal planning or recipe capture. This reads only the administrator-configured skill file, not memory or other files. The shared Mealie workspace's limits override unsupported private-memory, wger, shell, site-publishing, or inventory-video instructions.",
+        parameters: { type: "object", properties: {}, additionalProperties: false },
+        async execute() {
+          const text = await readFile(binding.skillPath, "utf8");
+          if (text.length > 50000) throw new Error("Carrie skill exceeds the configured size limit");
+          return { content: [{ type: "text", text }] };
+        },
+      });
+      return tools;
+    }, { names: ["carrie_mealie_read", "carrie_mealie_write", "carrie_workflow"], optional: true });
   },
 };
